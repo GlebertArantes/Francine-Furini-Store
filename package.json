@@ -5,6 +5,8 @@
   "scripts": {
     "test": "node --test tests/*.test.ts tests/storefront/*.test.js",
     "test:sql": "bash tests/sql/run.sh",
-    "test:all": "npm test && npm run test:sql"
+    "test:all": "npm test && npm run test:sql",
+    "storefront:config": "node scripts/storefront-config.mjs",
+    "storefront:serve": "node scripts/serve-storefront.mjs"
   }
 }
