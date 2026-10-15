@@ -4,7 +4,7 @@ Este plano deve ser executado em etapas pequenas, testáveis e auditáveis.
 
 ## Fase 0 — Base e segurança
 
-Status: em andamento.
+Status: quase concluída.
 
 - [x] README com escopo oficial
 - [x] CLAUDE.md com regras do projeto
@@ -13,9 +13,10 @@ Status: em andamento.
 - [x] `.env.example` sem secrets
 - [x] migration inicial de catálogo/pedidos/RLS
 - [x] revisar migration inicial antes de aplicar em produção (ver docs/AUDIT_ORDER_LIFECYCLE.md)
-- [ ] criar Supabase exclusivo da Francine
-- [ ] aplicar migrations em ambiente novo
-- [ ] rodar Supabase Security Advisors
+- [x] criar Supabase exclusivo da Francine
+- [x] aplicar migrations em ambiente novo
+- [x] rodar Supabase Security Advisors
+- [x] criar bucket `product-images` e policies de Storage
 - [ ] cadastrar primeiro usuário administrador
 
 ## Fase 1 — Backend mínimo de pedidos
