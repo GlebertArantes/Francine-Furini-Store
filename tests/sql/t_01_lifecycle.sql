@@ -56,6 +56,14 @@ begin
     perform pg_temp.ok('quantidade inválida ' || e || ' rejeitada',
       pg_temp.try_as('service_role', null, format($q$select public.create_order_request('{"name":"Ana","phone":"34988887777","postal_code":"38000000","address_line":"Rua","address_number":"1","neighborhood":"B","city":"C","state":"MG"}', '[{"variant_id":"20000000-0000-0000-0000-000000000001","quantity":%s}]')$q$, e)) like 'invalid_items%');
   end loop;
+  -- quantidade agregada: 15 + 15 = 30 > 20, mesmo com linhas individualmente válidas e estoque alto
+  update public.product_variants set quantity = 100 where id = '20000000-0000-0000-0000-000000000001';
+  perform pg_temp.ok('15+15 da mesma variante rejeitado (total 30 > 20)', pg_temp.try_as('service_role', null, $q$select public.create_order_request('{"name":"Ana","phone":"34988887777","postal_code":"38000000","address_line":"Rua X","address_number":"1","neighborhood":"B","city":"C","state":"MG"}', '[{"variant_id":"20000000-0000-0000-0000-000000000001","quantity":15},{"variant_id":"20000000-0000-0000-0000-000000000001","quantity":15}]')$q$) = 'invalid_items: quantity');
+  perform pg_temp.ok('10+10 da mesma variante (total 20) é aceito', pg_temp.try_as('service_role', null, $q$select public.create_order_request('{"name":"Ana","phone":"34988887777","postal_code":"38000000","address_line":"Rua X","address_number":"1","neighborhood":"B","city":"C","state":"MG"}', '[{"variant_id":"20000000-0000-0000-0000-000000000001","quantity":10},{"variant_id":"20000000-0000-0000-0000-000000000001","quantity":10}]')$q$) is null);
+  update public.product_variants set quantity = 3 where id = '20000000-0000-0000-0000-000000000001';
+  delete from public.order_status_history where order_id in (select id from public.orders where customer_phone = '34988887777' and subtotal_cents = 598000);
+  perform set_config('app.order_rpc', 'on', true);
+  delete from public.orders where customer_phone = '34988887777';
   perform pg_temp.ok('carrinho vazio rejeitado', pg_temp.try_as('service_role', null, $q$select public.create_order_request('{"name":"Ana","phone":"34988887777","postal_code":"38000000","address_line":"Rua","address_number":"1","neighborhood":"B","city":"C","state":"MG"}', '[]')$q$) = 'invalid_items');
   perform pg_temp.ok('variant_id malformado rejeitado', pg_temp.try_as('service_role', null, $q$select public.create_order_request('{"name":"Ana","phone":"34988887777","postal_code":"38000000","address_line":"Rua","address_number":"1","neighborhood":"B","city":"C","state":"MG"}', '[{"variant_id":"abc","quantity":1}]')$q$) = 'invalid_items');
   perform pg_temp.ok('telefone inválido rejeitado', pg_temp.try_as('service_role', null, $q$select public.create_order_request('{"name":"Ana","phone":"123","postal_code":"38000000","address_line":"Rua","address_number":"1","neighborhood":"B","city":"C","state":"MG"}', '[{"variant_id":"20000000-0000-0000-0000-000000000001","quantity":1}]')$q$) like 'invalid_customer%');
@@ -124,6 +132,15 @@ begin
   o2 := (r->>'order_id')::uuid;
   -- estoque de B some (ajuste manual do admin)
   update public.product_variants set quantity = 0 where id = '20000000-0000-0000-0000-000000000002';
+  -- sem frete definido: bloqueia ANTES de qualquer baixa
+  begin
+    perform public.admin_complete_order(o2);
+    raise exception 'FAIL: deveria exigir frete';
+  exception when others then e := sqlerrm; end;
+  perform pg_temp.ok('concluir sem frete falha (shipping_not_defined)', e = 'shipping_not_defined');
+  perform pg_temp.ok('sem frete: nada baixado e pedido aberto', (select quantity from public.product_variants where id='20000000-0000-0000-0000-000000000001') = 3
+     and (select status from public.orders where id = o2) = 'pending_shipping');
+  perform public.admin_set_order_shipping(o2, 0);
   begin
     perform public.admin_complete_order(o2);
     raise exception 'FAIL: deveria falhar';
@@ -136,6 +153,7 @@ begin
 
   -- conclusão válida
   r := public.admin_complete_order(o2, 'pago via pix');
+  perform pg_temp.ok('frete R$ 0,00 é válido para concluir', (select shipping_cents = 0 and final_total_cents = subtotal_cents from public.orders where id = o2));
   perform pg_temp.ok('conclusão válida', r->>'status' = 'completed' and not (r->>'already_done')::boolean);
   perform pg_temp.ok('estoque baixado exatamente', (select quantity from public.product_variants where id='20000000-0000-0000-0000-000000000001') = 2
      and (select quantity from public.product_variants where id='20000000-0000-0000-0000-000000000002') = 0);

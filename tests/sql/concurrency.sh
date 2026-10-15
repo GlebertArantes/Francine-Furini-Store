@@ -5,6 +5,7 @@ P() { command psql -X -q -t -A -v ON_ERROR_STOP=0 "$@"; }
 ADM=00000000-0000-0000-0000-0000000000a1
 CUST='{"name":"Conc","phone":"34%s","postal_code":"38000000","address_line":"Rua X","address_number":"1","neighborhood":"B","city":"C","state":"MG"}'
 fail=0
+ship() { P -c "select set_config('request.jwt.claims','{\"sub\":\"$ADM\"}',false); select public.admin_set_order_shipping('$1', ${2:-1500})" >/dev/null; }
 check() { if [ "$2" = "$3" ]; then echo "PASS: $1"; else echo "FAIL: $1 (esperado '$3', obtido '$2')"; fail=1; fi; }
 
 P -c "delete from public.order_status_history; delete from public.order_items; delete from public.orders; delete from private.order_code_counters;"
@@ -27,6 +28,7 @@ for ph in 911111111 922222222; do
 done
 ids=$(P -c "select id from public.orders where customer_phone in ('34911111111','34922222222')")
 out=$(mktemp)
+for id in $ids; do ship "$id"; done
 for id in $ids; do
   P -c "select set_config('request.jwt.claims','{\"sub\":\"$ADM\"}',false); select public.admin_complete_order('$id')" >>"$out" 2>&1 &
 done; wait
@@ -37,6 +39,7 @@ check "apenas 1 pedido completed" "$(P -c "select count(*) from public.orders wh
 
 # 3) Duplo clique: mesmo pedido concluído 5x em paralelo -> baixa uma única vez
 oid=$(P -c "select public.create_order_request('$(printf "$CUST" 933333333)','[{\"variant_id\":\"40000000-0000-0000-0000-000000000001\",\"quantity\":3}]')" | sed 's/.*"order_id": "\([^"]*\)".*/\1/')
+ship "$oid" 0   # frete R$ 0,00 é válido
 before=$(P -c "select quantity from public.product_variants where id='40000000-0000-0000-0000-000000000001'")
 for i in 1 2 3 4 5; do
   P -c "select set_config('request.jwt.claims','{\"sub\":\"$ADM\"}',false); select public.admin_complete_order('$oid')" >/dev/null 2>&1 &
@@ -44,5 +47,14 @@ done; wait
 after=$(P -c "select quantity from public.product_variants where id='40000000-0000-0000-0000-000000000001'")
 check "duplo clique baixa 3 unidades uma única vez" "$((before - after))" 3
 check "1 histórico completed" "$(P -c "select count(*) from public.order_status_history where order_id='$oid' and to_status='completed'")" 1
-rm -f "$out"
+
+# 4) Rate limit por telefone sob corrida: 12 criações simultâneas do MESMO telefone -> no máximo 5
+out2=$(mktemp)
+for i in $(seq 1 12); do
+  P -c "select public.create_order_request('$(printf "$CUST" 944444444)','[{\"variant_id\":\"40000000-0000-0000-0000-000000000001\",\"quantity\":1}]')" >>"$out2" 2>&1 &
+done; wait
+check "mesmo telefone, 12 simultâneas: exatamente 5 pedidos" "$(P -c "select count(*) from public.orders where customer_phone='34944444444'")" 5
+check "as 7 restantes receberam rate_limited" "$(grep -c rate_limited "$out2")" 7
+check "códigos continuam únicos" "$(P -c 'select count(*) - count(distinct display_code) from public.orders')" 0
+rm -f "$out" "$out2"
 exit $fail
