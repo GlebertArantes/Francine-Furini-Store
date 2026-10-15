@@ -59,7 +59,7 @@ Princípios:
 ## Estrutura prevista
 
 ```text
-storefront/   # loja pública
+storefront/   # loja pública (ver storefront/README.md)
 admin/        # painel administrativo
 supabase/     # migrations e funções backend
 tests/        # testes automatizados
