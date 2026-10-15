@@ -63,6 +63,20 @@ begin
     raise exception 'invalid_items: quantity' using errcode = 'P0001';
   end if;
 
+  -- Quantidade TOTAL por variante (após somar linhas repetidas) também respeita o limite.
+  if exists (
+    select 1 from jsonb_to_recordset(v_req) as r(variant_id uuid, qty integer)
+     group by variant_id having sum(qty) > c_max_qty
+  ) then
+    raise exception 'invalid_items: quantity' using errcode = 'P0001';
+  end if;
+
+  -- Serializa criações do mesmo telefone até o fim da transação: sem isso, várias
+  -- transações passariam pelo count antes de qualquer uma commitar. O lock é por hash
+  -- determinístico do telefone; sob READ COMMITTED o count após o lock enxerga os
+  -- pedidos já commitados pelas transações anteriores.
+  perform pg_advisory_xact_lock(hashtextextended('ff:create-order:phone:' || v_phone, 0));
+
   -- Limite por telefone (barreira de abuso no banco; IP/captcha ficam na Edge Function).
   if (select count(*) from public.orders o
        where o.customer_phone = v_phone and o.created_at > now() - interval '1 hour') >= c_max_per_hour then
