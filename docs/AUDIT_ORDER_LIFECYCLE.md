@@ -15,10 +15,10 @@ Nada foi aplicado em Supabase. Migrations novas: `0002_order_lifecycle.sql` e `0
 
 ## Decisões
 
-- **create-order = Edge Function + RPC.** A função faz CORS, limite de corpo, rate limit por IP, validação/normalização; a RPC `create_order_request` (só `service_role`) repete validações, lê preço/nome/cor/tamanho do banco, soma variantes repetidas, confere estoque **sem reservar**, grava order+items+histórico numa transação e retorna só `{order_id, display_code, status}`. Limite por telefone no banco (5/h).
+- **create-order = Edge Function + RPC.** A função faz CORS, limite de corpo, rate limit por IP, validação/normalização; a RPC `create_order_request` (só `service_role`) repete validações, lê preço/nome/cor/tamanho do banco, soma variantes repetidas, confere estoque **sem reservar**, grava order+items+histórico numa transação e retorna só `{order_id, display_code, status}`. Limite por telefone no banco (5/h), serializado com `pg_advisory_xact_lock(hashtextextended('ff:create-order:phone:'||telefone,0))` antes do `count`, para ser firme sob concorrência; o limite de 20 por variante é reaplicado na RPC **após** somar linhas repetidas (15+15 é rejeitado).
 - **Código `FF-DDMMYY-###`:** contador por dia (fuso America/Sao_Paulo) com `INSERT … ON CONFLICT DO UPDATE`; o lock de linha serializa criações concorrentes e o rollback desfaz o incremento.
 - **RPCs admin** (`admin_mark_order_contacted`, `admin_cancel_order`, `admin_complete_order`, `admin_set_order_shipping`): `SECURITY DEFINER`, `search_path=''`, checam `auth.uid()` + `is_admin()`, travam o pedido (`FOR UPDATE`), idempotentes.
-- **Conclusão:** trava variantes em ordem de id (evita deadlock), valida todos os itens, aborta com `insufficient_stock` (detalhe JSON dos itens), baixa, marca `completed`, `completed_at`, histórico. Retry retorna `already_done` sem nova baixa. `completed` não pode ser cancelado (estorno de estoque fora da V1).
+- **Conclusão:** trava variantes em ordem de id (evita deadlock), valida todos os itens, aborta com `insufficient_stock` (detalhe JSON dos itens), baixa, marca `completed`, `completed_at`, histórico. Exige `shipping_cents` e `final_total_cents` definidos (`shipping_not_defined` caso contrário; frete R$ 0,00 é válido). Fluxo V1: calcular frete → `admin_set_order_shipping` → `admin_complete_order` → baixa de estoque. Retry retorna `already_done` sem nova baixa. `completed` não pode ser cancelado (estorno de estoque fora da V1).
 
 ## Testes
 
@@ -26,8 +26,8 @@ Nada foi aplicado em Supabase. Migrations novas: `0002_order_lifecycle.sql` e `0
 
 ## Pendências / riscos
 
-- Rate limit da Edge Function é em memória por isolate (best effort); antes de produção avaliar Cloudflare Turnstile/WAF.
+- **Gate de produção:** `create-order` é pública (`--no-verify-jwt`); CORS/Origin não é autenticação e o rate limit em memória é best-effort. Antes do go-live, Turnstile/WAF ou equivalente é obrigatório contra spam distribuído.
 - Testes rodam com stubs de `auth`/roles, não no Supabase real: rodar Security Advisors e um smoke test após aplicar.
 - Deploy da função exige `--no-verify-jwt` e secrets `ALLOWED_ORIGINS` (SUPABASE_URL/SERVICE_ROLE vêm do ambiente da função).
-- Sem proteção contra pedidos repetidos de telefones diferentes (spam distribuído).
+- O advisory lock mantém criações do mesmo telefone em fila até o commit (impacto desprezível no volume da V1).
 - Estoque do mesmo item pode ser pedido por várias clientes (por desenho da V1).
