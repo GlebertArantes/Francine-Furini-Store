@@ -12,7 +12,7 @@ Status: em andamento.
 - [x] `.gitignore`
 - [x] `.env.example` sem secrets
 - [x] migration inicial de catálogo/pedidos/RLS
-- [ ] revisar migration inicial antes de aplicar em produção
+- [x] revisar migration inicial antes de aplicar em produção (ver docs/AUDIT_ORDER_LIFECYCLE.md)
 - [ ] criar Supabase exclusivo da Francine
 - [ ] aplicar migrations em ambiente novo
 - [ ] rodar Supabase Security Advisors
