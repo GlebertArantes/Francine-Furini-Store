@@ -284,6 +284,13 @@ begin
     raise exception 'invalid_transition: % -> completed', v_order.status using errcode = 'P0001';
   end if;
 
+  -- Fluxo V1: calcular frete -> definir frete -> concluir. Frete 0 é válido (NOT NULL).
+  if v_order.shipping_cents is null or v_order.final_total_cents is null then
+    raise exception 'shipping_not_defined'
+      using errcode = 'P0001',
+            hint = 'Defina o frete com admin_set_order_shipping antes de concluir (R$ 0,00 é válido).';
+  end if;
+
   -- Itens agregados por variante, travados em ordem de id (evita deadlock entre
   -- conclusões concorrentes que compartilham variantes).
   for v_need in
