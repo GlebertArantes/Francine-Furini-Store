@@ -1,4 +1,4 @@
-import { h } from "../lib/dom.js";
+import { h, setChildren } from "../lib/dom.js";
 import { formatBRL } from "../lib/format.js";
 import { subtotalCents, describeChange, MAX_QTY_PER_VARIANT } from "../lib/cart.js";
 import { imageEl, stateBlock, loadingGrid } from "./common.js";
@@ -19,11 +19,11 @@ export function cartView(ctx) {
   function draw() {
     const state = ctx.cart.get();
     if (!state.items.length) {
-      root.replaceChildren(h("h1", {}, "Seu carrinho"), changesNotice(changes),
+      setChildren(root, h("h1", {}, "Seu carrinho"), changesNotice(changes),
         stateBlock("Seu carrinho está vazio", "Escolha uma peça para começar.", h("a", { class: "btn", href: "#/" }, "Ver coleção")));
       return;
     }
-    root.replaceChildren(h("h1", {}, "Seu carrinho"),
+    setChildren(root, h("h1", {}, "Seu carrinho"),
       loadError ? h("p", { class: "notice error", role: "alert" }, "Não foi possível conferir o estoque agora. Revisaremos novamente ao finalizar.") : null,
       changesNotice(changes),
       h("div", { class: "cart-grid" },

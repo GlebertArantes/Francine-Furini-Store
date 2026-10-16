@@ -1,4 +1,4 @@
-import { h } from "../lib/dom.js";
+import { h, setChildren } from "../lib/dom.js";
 import { formatBRL, formatCep, formatPhone } from "../lib/format.js";
 import { subtotalCents } from "../lib/cart.js";
 import { validateCustomer, createOrderPlacer, postOrder, needsCartRefresh, errorMessage, UF_LIST } from "../lib/checkout.js";
@@ -20,7 +20,7 @@ export function checkoutView(ctx) {
   function draw(banner, saved) {
     const state = ctx.cart.get();
     if (!state.items.length) {
-      root.replaceChildren(h("h1", {}, "Finalizar pedido"), changesNotice(changes),
+      setChildren(root, h("h1", {}, "Finalizar pedido"), changesNotice(changes),
         stateBlock("Seu carrinho está vazio", "Adicione uma peça para continuar.", h("a", { class: "btn", href: "#/" }, "Ver coleção")));
       return;
     }

@@ -1,5 +1,5 @@
 // Storefront Francine Furini Store — roteador hash + shell. Supabase é a fonte do catálogo.
-import { h } from "./lib/dom.js";
+import { h, setChildren } from "./lib/dom.js";
 import { resolveConfig, createApi } from "./lib/api.js";
 import { createCartStore, totalQuantity } from "./lib/cart.js";
 import { variantIndex } from "./lib/catalog.js";
@@ -113,7 +113,7 @@ function buildShell(ctx) {
       footerName.textContent = name();
       announce.textContent = s.announcement_text || "";
       announce.classList.toggle("hidden", !s.announcement_text);
-      footerLinks.replaceChildren(
+      setChildren(footerLinks,
         s.instagram_url && /^https:\/\//.test(s.instagram_url) ? h("li", {}, h("a", { href: s.instagram_url, target: "_blank", rel: "noopener noreferrer" }, "Instagram")) : null,
         s.whatsapp_number ? h("li", {}, h("a", { href: `https://wa.me/${String(s.whatsapp_number).replace(/\D/g, "")}`, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp")) : null);
     },
