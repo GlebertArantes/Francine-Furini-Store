@@ -27,6 +27,7 @@ admin/
     auth.js              Supabase Auth REST: login, refresh (single-flight), logout; guarda só tokens/id/e-mail
     api.js               PostgREST + Storage com o JWT do admin; 401 -> refresh -> repete 1x -> volta ao login
     money.js             R$ <-> centavos por string (sem ponto flutuante)
+    photos.js            fila de fotos em memória + envio ordenado (criação e edição)
     rules.js             validação/payload de produto, variante, categoria, loja; regras de upload e ordenação de fotos
     orders.js            ações de pedido SOMENTE via RPC + single-flight + mapeamento de erros
     ui.js, dom.js        toasts, modal de confirmação, guarda de duplo clique, DOM seguro
@@ -41,6 +42,7 @@ admin/
   Erro `insufficient_stock` é mostrado com os itens em falta e o pedido é recarregado do servidor (sem sucesso falso).
 - **Catálogo**: CRUD direto onde as policies `*_admin_all` permitem. Categorias não têm exclusão (desativar). Variante usada em
   pedidos não pode ser removida (FK do banco) — a tela orienta desativar. Editar quantidade é *ajuste manual*, sem movimento automático.
+- **Fotos na criação do produto**: em `#/produtos/novo` a Francine já escolhe as fotos (preview, texto alternativo, remover da seleção). Nada é enviado antes de existir `product_id`: ao clicar em *Criar produto* o produto é criado primeiro e, com o ID retornado, as fotos válidas sobem em ordem. Se a criação falhar, nenhum upload acontece e a seleção é mantida. Se uma foto falhar depois da criação, o produto **não** é removido: a edição abre com um aviso listando as fotos que faltaram para reenviar. Arquivos inválidos (formato/8 MB) ficam sinalizados e nunca são enviados.
 - **Fotos**: bucket fixo `product-images`, path `products/<product-id>/<timestamp>-<rand>.<ext>` (extensão vem do MIME), limite 8 MB.
   Upload: arquivo primeiro, depois a linha no banco (se o insert falhar, o arquivo é apagado). Remoção: banco primeiro (a loja
   para de exibir), depois o arquivo; se o Storage falhar, o painel avisa do arquivo órfão — nunca fica foto quebrada na loja.

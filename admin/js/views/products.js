@@ -2,6 +2,7 @@ import { h } from "../lib/dom.js";
 import { formatBRL, centsToInput } from "../lib/money.js";
 import { validateProduct, validateVariant, slugify, stockLevel, validateImageFile, reorderImages, isoToLocalInput } from "../lib/rules.js";
 import { loadInto, guard, toast, field, showFieldErrors, confirmDialog, stateBox } from "../lib/ui.js";
+import { createPhotoQueue, uploadPhotos, createProductWithPhotos, summarizeUpload } from "../lib/photos.js";
 
 // ---------------------------------------------------------------- lista
 export function productsListView(ctx) {
@@ -38,22 +39,26 @@ export function productsListView(ctx) {
 export function productEditView(ctx, id) {
   const root = h("div", { class: "page" });
   const isNew = id === "novo";
+  // Em "novo", as fotos ficam só na memória do navegador até o produto existir (o picker sobrevive aos redraws).
+  const newPhotos = isNew ? photoPicker() : null;
   const draw = () => loadInto(ctx, root,
     async () => ({ categories: await ctx.api.listCategories(), product: isNew ? null : await ctx.api.getProduct(id) }),
     ({ categories, product }) => {
       if (!isNew && !product) { root.replaceChildren(stateBox("Produto não encontrado", "", h("a", { class: "btn secondary", href: "#/produtos" }, "Voltar"))); return; }
-      root.replaceChildren(
+      root.replaceChildren(...[
         h("p", { class: "crumbs" }, h("a", { href: "#/produtos" }, "Produtos"), " / ", product?.name ?? "Novo"),
         h("h1", {}, product ? product.name : "Novo produto"),
-        productForm(ctx, categories, product, draw),
-        product ? variantsSection(ctx, product, draw) : h("p", { class: "notice" }, "Salve o produto para adicionar variantes (cor/tamanho/estoque) e fotos."),
-        product ? imagesSection(ctx, product, draw) : null);
+        ctx.flash ? flashNotice(ctx) : null,
+        productForm(ctx, categories, product, draw, newPhotos),
+        product ? variantsSection(ctx, product, draw) : h("p", { class: "notice" }, "Salve o produto para adicionar variantes (cor/tamanho/estoque). As fotos escolhidas abaixo são enviadas junto com a criação."),
+        product ? imagesSection(ctx, product, draw)
+          : h("section", { class: "panel" }, h("h2", {}, "Fotos do produto"), h("p", { class: "muted small" }, "Opcional. As fotos só são enviadas quando você clicar em “Criar produto”."), newPhotos.el)].filter(Boolean));
     });
   draw();
   return root;
 }
 
-function productForm(ctx, categories, p, redraw) {
+function productForm(ctx, categories, p, redraw, photos) {
   const val = (v) => v ?? "";
   const inp = (name, v, attrs = {}) => h("input", { name, value: val(v), type: "text", ...attrs });
   const name = inp("name", p?.name, { maxlength: 160, required: true });
@@ -88,7 +93,16 @@ function productForm(ctx, categories, p, redraw) {
     if (!v.ok) return;
     try {
       if (p) { await ctx.api.updateProduct(p.id, v.payload); toast("Produto salvo."); redraw(); }
-      else { const created = await ctx.api.createProduct(v.payload); toast("Produto criado. Adicione variantes e fotos."); ctx.navigate(`#/produtos/${created.id}`); }
+      else {
+        // 1) cria o produto (falhou => nada é enviado e a seleção de fotos permanece); 2) envia as fotos com o ID retornado.
+        const r = await createProductWithPhotos(ctx.api, v.payload, photos.queue);
+        if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
+        const sum = summarizeUpload(r);
+        ctx.flash = sum.hasProblem ? { type: "error", text: `Produto criado, mas houve problemas com as fotos. ${sum.text}` } : null;
+        toast(sum.hasProblem ? "Produto criado, mas algumas fotos falharam." : `Produto criado.${sum.text ? " " + sum.text : ""} Adicione as variantes.`, sum.hasProblem ? "error" : "ok");
+        photos.reset();
+        ctx.navigate(`#/produtos/${r.product.id}`);
+      }
     } catch (e) {
       if (ctx.fail(e)) return;
       if (e.status === 409) showFieldErrors(form, /sku/i.test(e.details ?? e.message ?? "") ? { sku: "Já existe um produto com esse SKU." } : { slug: "Já existe um produto com esse slug." });
@@ -152,36 +166,17 @@ function variantRow(ctx, p, v, redraw) {
 // ---------------------------------------------------------------- imagens
 function imagesSection(ctx, p, redraw) {
   const images = [...(p.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
-  const picker = h("input", { type: "file", id: "pick", accept: "image/jpeg,image/png,image/webp,image/avif", multiple: true });
-  const previews = h("div", { class: "previews" });
-  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada.");
+  const pk = photoPicker({ onChange: (has) => { uploadBtn.disabled = !has; } });
   const uploadBtn = h("button", { type: "button", class: "btn", disabled: true }, "Enviar fotos");
-  let queue = [];
   let moving = false;
-  const urls = [];
-
-  picker.addEventListener("change", () => {
-    urls.splice(0).forEach((u) => URL.revokeObjectURL(u));
-    queue = [...picker.files].map((file) => ({ file, check: validateImageFile(file), url: null, alt: "" }));
-    previews.replaceChildren(...queue.map((it) => {
-      if (it.check.ok) { it.url = URL.createObjectURL(it.file); urls.push(it.url); }
-      const alt = h("input", { placeholder: "Texto alternativo (descreva a foto)", "aria-label": `Texto alternativo de ${it.file.name}`, oninput: (e) => { it.alt = e.target.value; } });
-      return h("figure", { class: `preview${it.check.ok ? "" : " bad"}` }, it.url ? h("img", { src: it.url, alt: "Pré-visualização" }) : null,
-        h("figcaption", {}, it.file.name), it.check.ok ? alt : h("p", { class: "err" }, it.check.error));
-    }));
-    uploadBtn.disabled = !queue.some((i) => i.check.ok);
-  });
 
   const upload = guard(uploadBtn, async () => {
-    const ok = queue.filter((i) => i.check.ok);
-    let next = images.reduce((m, i) => Math.max(m, i.sort_order), -1) + 1;
-    let sent = 0;
-    for (const it of ok) {
-      try { await ctx.api.uploadImage(p.id, it.file, { altText: it.alt.trim(), sortOrder: next++ }); sent++; }
-      catch (e) { if (ctx.fail(e)) return; toast(`Falha ao enviar ${it.file.name}.`, "error"); }
-    }
-    if (sent) toast(`${sent} foto(s) enviada(s).`);
-    urls.splice(0).forEach((u) => URL.revokeObjectURL(u));
+    const start = images.reduce((m, i) => Math.max(m, i.sort_order), -1) + 1;
+    const r = await uploadPhotos(ctx.api, p.id, pk.queue.valid(), start);
+    if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
+    const sum = summarizeUpload(r);
+    if (sum.text) toast(sum.text, sum.hasProblem ? "error" : "ok");
+    pk.reset();
     redraw();
   });
   uploadBtn.addEventListener("click", upload);
@@ -218,5 +213,43 @@ function imagesSection(ctx, p, redraw) {
 
   return h("section", { class: "panel" }, h("h2", {}, "Fotos"),
     images.length ? h("ul", { class: "rows imgs" }, images.map(imgRow)) : h("p", { class: "muted" }, "Nenhuma foto ainda."),
-    h("div", { class: "upload" }, h("label", { for: "pick" }, "Adicionar fotos"), picker, info, previews, uploadBtn));
+    h("div", { class: "upload" }, pk.el, uploadBtn));
+}
+
+function flashNotice(ctx) {
+  const f = ctx.flash; ctx.flash = null;
+  return h("div", { class: `notice${f.type === "error" ? " error" : ""}`, role: "alert" }, f.text);
+}
+
+/**
+ * Seletor de fotos reutilizável (criação e edição): várias fotos, preview, texto alternativo e remoção
+ * da seleção. Mantém tudo em memória (File + URL local); nenhuma requisição é feita aqui.
+ */
+function photoPicker({ onChange } = {}) {
+  const queue = createPhotoQueue();
+  const urls = new Map();
+  const id = `pick-${Math.random().toString(36).slice(2, 6)}`;
+  const input = h("input", { type: "file", id, accept: "image/jpeg,image/png,image/webp,image/avif", multiple: true });
+  const list = h("div", { class: "previews" });
+  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada. A ordem de seleção é a ordem das fotos (a primeira é a principal).");
+
+  const draw = () => {
+    list.replaceChildren(...queue.items.map((it, i) => {
+      if (it.check.ok && !urls.has(it.key)) urls.set(it.key, URL.createObjectURL(it.file));
+      const alt = h("input", { value: it.alt, maxlength: 200, placeholder: "Texto alternativo (opcional)", "aria-label": `Texto alternativo de ${it.file.name}`, oninput: (e) => queue.setAlt(it.key, e.target.value) });
+      const rm = h("button", { type: "button", class: "link-btn danger", "aria-label": `Remover ${it.file.name} da seleção`, onclick: () => { const u = urls.get(it.key); if (u) { URL.revokeObjectURL(u); urls.delete(it.key); } queue.remove(it.key); draw(); } }, "Remover da seleção");
+      return h("figure", { class: `preview${it.check.ok ? "" : " bad"}`, "data-photo": it.file.name },
+        urls.has(it.key) ? h("img", { src: urls.get(it.key), alt: "Pré-visualização" }) : null,
+        h("figcaption", {}, it.check.ok ? `${i === 0 ? "Principal · " : ""}${it.file.name}` : it.file.name),
+        it.check.ok ? alt : h("p", { class: "err" }, it.check.error), rm);
+    }));
+    onChange?.(queue.valid().length > 0);
+  };
+  input.addEventListener("change", () => { queue.add([...input.files]); input.value = ""; draw(); });
+
+  return {
+    queue,
+    el: h("div", { class: "photo-picker" }, h("label", { for: id }, "Adicionar fotos"), input, info, list),
+    reset() { for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); draw(); },
+  };
 }
