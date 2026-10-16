@@ -17,4 +17,12 @@ function append(el, children) {
     el.append(c instanceof Node ? c : document.createTextNode(String(c)));
   }
 }
+/**
+ * Substitui os filhos de `el` descartando null/undefined/false. O replaceChildren() nativo converte esses
+ * valores em TEXTO ("null"), então qualquer lista com filhos condicionais deve passar por aqui.
+ */
+export function setChildren(el, ...children) {
+  el.replaceChildren(...children.flat(Infinity).filter((c) => c != null && c !== false));
+  return el;
+}
 export const clear = (el) => { el.replaceChildren(); return el; };

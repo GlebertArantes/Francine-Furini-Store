@@ -1,4 +1,4 @@
-import { h } from "../lib/dom.js";
+import { h, setChildren } from "../lib/dom.js";
 import { colorsOf, sizesOfColor, inStock, cartLine, isSoldOut } from "../lib/catalog.js";
 import { MAX_QTY_PER_VARIANT } from "../lib/cart.js";
 import { imageEl, priceEl, loadingGrid, stateBlock } from "./common.js";
@@ -38,7 +38,7 @@ export function productView(ctx, slug) {
       const v = current();
       const imgs = p.images;
       const cur = imgs[imgIdx];
-      gallery.replaceChildren(
+      setChildren(gallery,
         h("div", { class: "main" }, imageEl(ctx.api.imageUrl(cur?.storage_path), cur?.alt_text || p.name, p.name)),
         imgs.length > 1 ? h("div", { class: "thumbs", role: "group", "aria-label": "Fotos" }, imgs.map((im, i) =>
           h("button", { type: "button", "aria-current": String(i === imgIdx), "aria-label": `Foto ${i + 1} de ${imgs.length}`, onclick: () => { imgIdx = i; draw(); } },
@@ -53,7 +53,7 @@ export function productView(ctx, slug) {
       else if (v.quantity <= 3) stockText = `Restam apenas ${v.quantity} unidade(s).`;
       if (note) stockText = note;
 
-      info.replaceChildren(
+      setChildren(info,
         h("p", { class: "eyebrow" }, ctx.categories.find((c) => c.id === p.category_id)?.name ?? ""),
         h("h1", {}, p.name), priceEl(p),
         colors.length > 1 || colors[0] ? h("div", { class: "opt-group" }, h("span", { class: "label", id: "lbl-cor" }, `Cor: ${color}`),
