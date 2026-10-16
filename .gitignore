@@ -25,3 +25,4 @@ yarn-error.log*
 
 # Gerado a partir do ambiente (valores públicos)
 storefront/config.js
+admin/config.js

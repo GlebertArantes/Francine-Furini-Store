@@ -115,3 +115,12 @@ export function reorderImages(images, id, dir) {
   [list[i], list[j]] = [list[j], list[i]];
   return list.map((x, idx) => ({ id: x.id, sort_order: idx })).filter((u) => images.find((x) => x.id === u.id).sort_order !== u.sort_order);
 }
+
+/** ISO (UTC) -> valor de <input type="datetime-local"> no fuso local. */
+export function isoToLocalInput(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}

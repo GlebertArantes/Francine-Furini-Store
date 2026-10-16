@@ -82,3 +82,13 @@ test("ordenação de fotos e nível de estoque", () => {
   assert.deepEqual(reorderImages(imgs, "a", "up"), []);
   assert.deepEqual([0, 1, 2, 3].map((quantity) => stockLevel({ quantity })), ["out", "low", "low", "ok"]);
 });
+
+test("isoToLocalInput devolve valor de datetime-local e vazio para inválido", async () => {
+  const { isoToLocalInput } = await import("../../admin/js/lib/rules.js");
+  assert.equal(isoToLocalInput(null), "");
+  assert.equal(isoToLocalInput("lixo"), "");
+  assert.match(isoToLocalInput("2026-10-20T13:00:00.000Z"), /^2026-10-(19|20|21)T\d{2}:\d{2}$/);
+  // ida e volta com o validador de produto
+  const back = validateProduct({ name: "A", slug: "a", price: "1", published_at: isoToLocalInput("2026-10-20T13:00:00.000Z") });
+  assert.equal(back.payload.published_at, "2026-10-20T13:00:00.000Z");
+});

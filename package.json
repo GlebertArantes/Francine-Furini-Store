@@ -7,6 +7,7 @@
     "test:sql": "bash tests/sql/run.sh",
     "test:all": "npm test && npm run test:sql",
     "storefront:config": "node scripts/storefront-config.mjs",
-    "storefront:serve": "node scripts/serve-storefront.mjs"
+    "storefront:serve": "node scripts/serve-storefront.mjs",
+    "admin:serve": "node scripts/serve-storefront.mjs 5174 admin"
   }
 }

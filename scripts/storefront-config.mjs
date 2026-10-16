@@ -1,4 +1,4 @@
-// Gera storefront/config.js a partir de variáveis de ambiente (build mínimo, sem dependências).
+// Gera storefront/config.js e admin/config.js a partir de variáveis de ambiente (build mínimo, sem dependências).
 // Uso: SUPABASE_URL=... SUPABASE_PUBLISHABLE_KEY=... node scripts/storefront-config.mjs
 // Só valores PÚBLICOS entram no arquivo; chaves secretas/service_role são recusadas.
 import { writeFileSync } from "node:fs";
@@ -26,9 +26,9 @@ export function buildConfig(env) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
-    const out = new URL("../storefront/config.js", import.meta.url);
-    writeFileSync(out, buildConfig(process.env));
-    console.log("storefront/config.js gerado.");
+    const js = buildConfig(process.env);
+    for (const f of ["storefront", "admin"]) writeFileSync(new URL(`../${f}/config.js`, import.meta.url), js);
+    console.log("storefront/config.js e admin/config.js gerados.");
   } catch (e) {
     console.error(`Erro: ${e.message}`);
     process.exit(1);
