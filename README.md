@@ -60,7 +60,7 @@ Princípios:
 
 ```text
 storefront/   # loja pública (ver storefront/README.md)
-admin/        # painel administrativo
+admin/        # painel administrativo (ver admin/README.md)
 supabase/     # migrations e funções backend
 tests/        # testes automatizados
 docs/         # documentação técnica
