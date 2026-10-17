@@ -1,6 +1,7 @@
 import { h } from "../lib/dom.js";
 
 const updated = "17 de outubro de 2026";
+const cnpj = "31.185.840/0001-08";
 
 function contactBlock(ctx) {
   const phone = String(ctx.settings?.whatsapp_number || "").replace(/\D/g, "");
@@ -16,7 +17,8 @@ function privacy(ctx) {
     h("p", { class: "eyebrow" }, "Informações legais"),
     h("h1", {}, "Política de Privacidade"),
     h("p", { class: "legal-updated" }, `Última atualização: ${updated}.`),
-    h("p", {}, "A Francine Furini Store utiliza os dados informados no checkout somente para receber e atender solicitações de compra, calcular o frete manualmente, entrar em contato com a cliente e manter os registros necessários da operação."),
+    h("p", {}, `Responsável pelo atendimento: Francine Furini Store — CNPJ ${cnpj}.`),
+    h("p", {}, "A Francine Furini Store utiliza os dados informados no checkout principalmente para receber e atender solicitações de compra, calcular o frete manualmente, entrar em contato com a cliente e manter os registros necessários da operação."),
     h("h2", {}, "Dados coletados"),
     h("p", {}, "Podem ser coletados nome, número de WhatsApp, CEP, endereço, número, complemento, bairro, cidade, estado, observações do pedido e informações sobre os itens solicitados."),
     h("h2", {}, "Como usamos os dados"),
@@ -26,6 +28,8 @@ function privacy(ctx) {
       h("li", {}, "entrar em contato para combinar pagamento e entrega;"),
       h("li", {}, "controlar pedidos, atendimento e estoque;"),
       h("li", {}, "cumprir obrigações legais e manter registros comerciais quando aplicável.")),
+    h("h2", {}, "Dados no navegador"),
+    h("p", {}, "A loja usa armazenamento local do navegador para manter o carrinho e armazenamento de sessão para lembrar o código do último pedido durante a navegação. Esses dados de interface não substituem o registro oficial do pedido no banco da loja."),
     h("h2", {}, "Armazenamento e segurança"),
     h("p", {}, "Os dados são armazenados em infraestrutura de banco de dados e serviços contratados pela loja. São adotados controles de acesso e medidas técnicas para reduzir acesso, alteração ou divulgação indevidos. Nenhum sistema conectado à internet pode oferecer risco zero."),
     h("h2", {}, "Compartilhamento"),
@@ -42,6 +46,7 @@ function terms(ctx) {
     h("p", { class: "eyebrow" }, "Informações legais"),
     h("h1", {}, "Termos de Uso e Compra"),
     h("p", { class: "legal-updated" }, `Última atualização: ${updated}.`),
+    h("p", {}, `Loja: Francine Furini Store — CNPJ ${cnpj}.`),
     h("p", {}, "Este site funciona como uma vitrine digital e canal de solicitação de compra da Francine Furini Store. Na V1, frete e pagamento são combinados manualmente após o envio do pedido."),
     h("h2", {}, "Solicitação de compra"),
     h("p", {}, "Ao enviar o checkout, a cliente registra uma solicitação com os itens selecionados. O envio não realiza cobrança automática e não significa confirmação definitiva de pagamento ou entrega."),
