@@ -8,6 +8,7 @@ import { productView } from "./views/product.js";
 import { cartView } from "./views/cart.js";
 import { checkoutView } from "./views/checkout.js";
 import { successView } from "./views/success.js";
+import { legalView } from "./views/legal.js";
 
 const appEl = document.getElementById("app");
 const ORDER_KEY = "francine-furini-store:last-order";
@@ -63,7 +64,8 @@ function boot() {
     const raw = location.hash.replace(/^#/, "") || "/";
     const [path, qs] = raw.split("?");
     const query = new URLSearchParams(qs ?? "");
-    document.title = ctx.settings.store_name || "Francine Furini Store";
+    const storeName = ctx.settings.store_name || "Francine Furini Store";
+    document.title = storeName;
     shell.syncSearch(query.get("q") ?? "");
     let view;
     const parts = path.split("/").filter(Boolean);
@@ -71,6 +73,8 @@ function boot() {
     else if (parts[0] === "carrinho") view = cartView(ctx);
     else if (parts[0] === "checkout") view = checkoutView(ctx);
     else if (parts[0] === "pedido") view = successView(ctx);
+    else if (parts[0] === "privacidade") { document.title = `Política de Privacidade — ${storeName}`; view = legalView(ctx, "privacidade"); }
+    else if (parts[0] === "termos") { document.title = `Termos de Uso e Compra — ${storeName}`; view = legalView(ctx, "termos"); }
     else view = homeView(ctx, query);
     shell.main.replaceChildren(view);
     if (!(parts.length === 0 && query.toString())) window.scrollTo(0, 0);
@@ -93,7 +97,7 @@ function buildShell(ctx) {
         input, h("button", { type: "submit", "aria-label": "Buscar" }, "Buscar")),
       h("a", { class: "cart-link", href: "#/carrinho" }, "Carrinho", count, countSr)));
   const main = h("main", { id: "main", tabindex: "-1" });
-  const footerLinks = h("ul", {});
+  const footerLinks = h("ul", { class: "legal-links" });
   const footerName = h("strong", {});
   const footer = h("footer", { class: "site-footer" }, h("div", { class: "wrap" },
     h("div", { class: "cols" }, h("div", {}, footerName, h("p", { style: "margin:.25rem 0 0" }, "Moda feminina com atendimento próximo.")), footerLinks),
@@ -115,7 +119,9 @@ function buildShell(ctx) {
       announce.classList.toggle("hidden", !s.announcement_text);
       setChildren(footerLinks,
         s.instagram_url && /^https:\/\//.test(s.instagram_url) ? h("li", {}, h("a", { href: s.instagram_url, target: "_blank", rel: "noopener noreferrer" }, "Instagram")) : null,
-        s.whatsapp_number ? h("li", {}, h("a", { href: `https://wa.me/${String(s.whatsapp_number).replace(/\D/g, "")}`, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp")) : null);
+        s.whatsapp_number ? h("li", {}, h("a", { href: `https://wa.me/${String(s.whatsapp_number).replace(/\D/g, "")}`, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp")) : null,
+        h("li", {}, h("a", { href: "#/privacidade" }, "Privacidade")),
+        h("li", {}, h("a", { href: "#/termos" }, "Termos")));
     },
   };
 }
