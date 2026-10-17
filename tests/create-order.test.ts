@@ -105,3 +105,77 @@ test("handler: rate limit por IP", async () => {
   assert.deepEqual(s, [201, 201, 429]);
   assert.equal(calls.length, 2);
 });
+
+// ---- CORS de produção (domínio oficial + pages.dev) ---------------------------------------------
+import { parseAllowedOrigins } from "../supabase/functions/create-order/handler.ts";
+
+const OFFICIAL = "https://francinefurinistore.com.br";
+const PAGES = "https://francine-furini-store.pages.dev";
+const PROD_ENV = `${OFFICIAL},${PAGES}`;
+const prodHandler = () => {
+  const calls: any[] = [];
+  const handler = createHandler({
+    supabaseUrl: "https://example.supabase.co", serviceRoleKey: "TEST-KEY-NOT-REAL",
+    allowedOrigins: parseAllowedOrigins(PROD_ENV).origins, rateLimit: () => true,
+    fetch: (async (url: string, init: any) => { calls.push({ url, init }); return Response.json({ order_id: "o", display_code: "FF-171026-001", status: "pending_shipping" }); }) as any,
+  });
+  return { handler, calls };
+};
+const fromOrigin = (origin: string, method = "POST") =>
+  new Request("https://fn/create-order", { method, headers: { origin, "content-type": "application/json" }, body: method === "POST" ? JSON.stringify(good()) : undefined });
+
+test("CORS produção: domínio oficial e pages.dev são autorizados (POST e preflight)", async () => {
+  for (const origin of [OFFICIAL, PAGES]) {
+    const { handler } = prodHandler();
+    const res = await handler(fromOrigin(origin));
+    assert.equal(res.status, 201, origin);
+    assert.equal(res.headers.get("access-control-allow-origin"), origin);
+    const pre = await handler(fromOrigin(origin, "OPTIONS"));
+    assert.equal(pre.status, 204);
+    assert.equal(pre.headers.get("access-control-allow-origin"), origin);
+    assert.match(pre.headers.get("access-control-allow-methods") ?? "", /POST/);
+  }
+});
+
+test("CORS produção: origens não autorizadas são recusadas, sem curinga e sem chegar ao banco", async () => {
+  const bad = ["https://evil.example", "http://francinefurinistore.com.br", "https://www.francinefurinistore.com.br",
+    "https://francinefurinistore.com.br.evil.com", "https://evilfrancinefurinistore.com.br", "https://francine-furini-admin.pages.dev",
+    "https://francinefurinistore.com.br:8443", "null", "https://FRANCINEFURINISTORE.COM.BR.evil.com"];
+  for (const origin of bad) {
+    const { handler, calls } = prodHandler();
+    const res = await handler(fromOrigin(origin));
+    assert.equal(res.status, 403, origin);
+    assert.equal(res.headers.get("access-control-allow-origin"), null, origin);
+    const pre = await handler(fromOrigin(origin, "OPTIONS"));
+    assert.equal(pre.headers.get("access-control-allow-origin"), null, `preflight ${origin}`);
+    assert.equal(calls.length, 0, `nada enviado ao banco para ${origin}`);
+  }
+});
+
+test("CORS: Access-Control-Allow-Origin nunca é '*' e o admin não é origem autorizada do checkout", async () => {
+  const { handler } = prodHandler();
+  for (const origin of [OFFICIAL, PAGES, "https://evil.example"]) {
+    const res = await handler(fromOrigin(origin));
+    assert.notEqual(res.headers.get("access-control-allow-origin"), "*");
+    assert.equal(res.headers.get("vary"), "Origin");
+  }
+});
+
+test("parseAllowedOrigins: valor de produção, normalização e rejeição de curingas/entradas inseguras", () => {
+  assert.deepEqual(parseAllowedOrigins(PROD_ENV), { origins: [OFFICIAL, PAGES], rejected: 0 });
+  assert.deepEqual(parseAllowedOrigins(` ${OFFICIAL} , ${PAGES},,`).origins, [OFFICIAL, PAGES]); // espaços e vírgulas sobrando
+  assert.deepEqual(parseAllowedOrigins(`${OFFICIAL},${OFFICIAL}`).origins, [OFFICIAL]);
+  const r = parseAllowedOrigins(`*,https://*.pages.dev,${OFFICIAL}/,http://francinefurinistore.com.br,https://x.com/caminho,javascript:alert(1),${OFFICIAL}`);
+  assert.deepEqual(r.origins, [OFFICIAL]);
+  assert.equal(r.rejected, 6);
+  assert.deepEqual(parseAllowedOrigins(undefined), { origins: [], rejected: 0 });
+  assert.deepEqual(parseAllowedOrigins("").origins, []);
+  // desenvolvimento local só entra se listado explicitamente
+  assert.deepEqual(parseAllowedOrigins("http://localhost:5173").origins, ["http://localhost:5173"]);
+  assert.deepEqual(parseAllowedOrigins("http://localhost").origins, []);
+});
+
+test("CORS: sem ALLOWED_ORIGINS nenhuma origem de navegador é aceita", async () => {
+  const handler = createHandler({ supabaseUrl: "https://x.supabase.co", serviceRoleKey: "k", allowedOrigins: parseAllowedOrigins("").origins, rateLimit: () => true, fetch: (async () => Response.json({})) as any });
+  assert.equal((await handler(fromOrigin(OFFICIAL))).status, 403);
+});

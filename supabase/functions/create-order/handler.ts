@@ -10,6 +10,22 @@ export type Deps = {
 
 const MAX_BODY_BYTES = 16 * 1024;
 
+// Origem aceita: https://host[:porta] sem caminho/curinga, ou http://localhost|127.0.0.1:porta (desenvolvimento,
+// somente se listado explicitamente). Qualquer outra coisa (ex.: "*", "https://*.x.com", barra final) é descartada.
+const ORIGIN_RE = /^(https:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?|http:\/\/(localhost|127\.0\.0\.1):\d{1,5})$/i;
+
+/** Lê ALLOWED_ORIGINS (lista separada por vírgulas). Sem curingas: entradas inválidas são rejeitadas, nunca "aceitas por aproximação". */
+export function parseAllowedOrigins(raw: string | undefined): { origins: string[]; rejected: number } {
+  const origins = new Set<string>();
+  let rejected = 0;
+  for (const part of (raw ?? "").split(",")) {
+    const o = part.trim();
+    if (!o) continue;
+    if (ORIGIN_RE.test(o)) origins.add(o.toLowerCase()); else rejected++;
+  }
+  return { origins: [...origins], rejected };
+}
+
 // Erros conhecidos da RPC -> HTTP. Nada de detalhes internos vaza para o cliente.
 const RPC_ERRORS: Record<string, [number, string]> = {
   insufficient_stock: [409, "insufficient_stock"],

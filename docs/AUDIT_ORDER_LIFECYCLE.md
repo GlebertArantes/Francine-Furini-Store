@@ -28,6 +28,6 @@ Nada foi aplicado em Supabase. Migrations novas: `0002_order_lifecycle.sql` e `0
 
 - **Gate de produção:** `create-order` é pública (`--no-verify-jwt`); CORS/Origin não é autenticação e o rate limit em memória é best-effort. Antes do go-live, Turnstile/WAF ou equivalente é obrigatório contra spam distribuído.
 - Testes rodam com stubs de `auth`/roles, não no Supabase real: rodar Security Advisors e um smoke test após aplicar.
-- Deploy da função exige `--no-verify-jwt` e secrets `ALLOWED_ORIGINS` (SUPABASE_URL/SERVICE_ROLE vêm do ambiente da função).
+- Deploy da função exige `--no-verify-jwt` e secret `ALLOWED_ORIGINS` (SUPABASE_URL/SERVICE_ROLE vêm do ambiente da função). Valor de produção e procedimento: `docs/DOMINIO_E_CORS.md`.
 - O advisory lock mantém criações do mesmo telefone em fila até o commit (impacto desprezível no volume da V1).
 - Estoque do mesmo item pode ser pedido por várias clientes (por desenho da V1).
