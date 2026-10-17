@@ -46,3 +46,12 @@ storefront/
 ## Testes
 
 `npm test` cobre as regras JS (`tests/storefront/`). Fluxo no navegador foi verificado manualmente com Chromium contra um mock do Supabase.
+
+## Domínio oficial e SEO
+
+- Domínio oficial: `https://francinefurinistore.com.br`. `index.html` declara `canonical` e `og:url` absolutos para ele; as rotas
+  são por hash (`#/produto/...`), então o canonical é sempre a raiz. O `pages.dev` continua no ar e aponta o canonical para o domínio oficial.
+- O redirecionamento `www` → domínio principal (301) é feito na Cloudflare; não há `_redirects` nem `<meta refresh>` no código.
+- A CSP (`_headers`) usa `'self'` e não cita o host da loja: trocar/adicionar domínio **não exige** alterar a CSP.
+- Checkout em um domínio novo exige incluí-lo em `ALLOWED_ORIGINS` da Edge Function (`docs/DOMINIO_E_CORS.md`).
+- Sem `og:image` até a marca oficial estar disponível.

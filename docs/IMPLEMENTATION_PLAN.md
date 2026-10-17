@@ -118,10 +118,14 @@ Status: **concluída e validada**.
 - [ ] Francine cadastrar/testar ao menos um produto real pelo painel
 - [ ] validar edição, fotos, variantes e estoque com dados reais
 - [ ] criar/entregar usuário administrador da Francine
-- [ ] trocar WhatsApp temporário `5534984258056` pelo oficial `5531995652798`
+- [ ] trocar WhatsApp temporário de testes `5534984258056` pelo oficial `5531995652798` (somente na entrega; preservado até lá)
 - [ ] confirmar CEP/origem da loja
 - [ ] confirmar Instagram oficial
-- [ ] decidir domínio próprio ou manter `pages.dev`
+- [x] domínio próprio da loja: `francinefurinistore.com.br` (Cloudflare Pages; `www` → 301 para o principal; `pages.dev` preservado; admin sem domínio próprio, em `francine-furini-admin.pages.dev`)
+- [x] canonical e `og:url` do storefront apontam para o domínio oficial
+- [ ] `ALLOWED_ORIGINS` da Edge Function `create-order` com o domínio oficial + `pages.dev` (ver `docs/DOMINIO_E_CORS.md`)
+- [ ] validação controlada de pedido pelo domínio oficial (frete e pagamento continuam manuais)
+- [ ] logo/imagem social (`og:image`) após a marca oficial coletada no Instagram
 - [ ] smoke final após dados reais
 
 O checklist operacional rastreável também está no GitHub Issue #9.

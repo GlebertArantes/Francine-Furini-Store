@@ -12,7 +12,12 @@ Loja virtual da **Francine Furini Store**, desenvolvida pela TaskZap.
 - Admin atual: `https://francine-furini-admin.pages.dev`
 - Supabase exclusivo: projeto `txgatyftvtpkgqlncxju`
 - Branch de produção: `main`
-- Domínio próprio planejado: prioridade para `francinefurini.com.br`, com `www` apontando/redirecionando para a loja e `admin.francinefurini.com.br` para o painel, sujeito à disponibilidade no Registro.br.
+- **Domínio oficial da loja:** `https://francinefurinistore.com.br` (Cloudflare Pages, HTTPS ativo).
+- `https://www.francinefurinistore.com.br` redireciona (301) para o domínio principal — configurado na Cloudflare, sem redirecionamento no código.
+- `https://francine-furini-store.pages.dev` continua funcionando e **é preservado** (alternativa e período de migração).
+- **O admin não tem domínio próprio:** permanece em `https://francine-furini-admin.pages.dev`.
+- Fluxo comercial inalterado: **frete manual** e **pagamento manual**, combinados diretamente pela Francine.
+- Checkout em novos domínios: ver [`docs/DOMINIO_E_CORS.md`](docs/DOMINIO_E_CORS.md) (variável `ALLOWED_ORIGINS` da Edge Function).
 
 ## Escopo da V1
 
@@ -91,8 +96,8 @@ Dependências da cliente no aceite final:
 - validar fotos, variantes, estoque e edição;
 - criar/entregar efetivamente o usuário administrador da Francine no Supabase Auth;
 - confirmar CEP/origem da loja e Instagram;
-- registrar/configurar o domínio próprio escolhido;
-- trocar o WhatsApp temporário pelo oficial;
+- validar o checkout de ponta a ponta no domínio oficial (etapa controlada, após a atualização de `ALLOWED_ORIGINS`);
+- trocar o WhatsApp temporário de testes pelo oficial somente na entrega (preservado até lá);
 - rodar smoke final de produção.
 
 ## Fora da V1
