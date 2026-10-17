@@ -1,4 +1,5 @@
-// Supabase Auth (GoTrue) por e-mail + senha, via REST oficial (/auth/v1). Sem SDK/CDN.
+// Supabase Auth (GoTrue) por identificador interno + senha, via REST oficial (/auth/v1). Sem SDK/CDN.
+// A UI pode usar login simples e convertê-lo para um e-mail técnico antes desta camada.
 // A sessão (tokens) fica em localStorage, como no supabase-js. Senha NUNCA é guardada nem logada.
 
 export const SESSION_KEY = "francine-furini-store:admin:session:v1";
@@ -30,7 +31,7 @@ export function createAuth({ url, key, fetchFn, storage = null, now = () => Math
     body: JSON.stringify(body ?? {}),
   });
 
-  // Só guarda o necessário (tokens + id/e-mail); nunca a resposta completa nem senha.
+  // Só guarda o necessário (tokens + id/e-mail técnico); nunca a resposta completa nem senha.
   const toSession = (b) => ({
     access_token: b.access_token,
     refresh_token: b.refresh_token,
@@ -43,16 +44,16 @@ export function createAuth({ url, key, fetchFn, storage = null, now = () => Math
     get user() { return session?.user ?? null; },
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
-    async signIn(email, password) {
-      const e = String(email ?? "").trim();
-      if (!e || !password) throw new AuthError("invalid_credentials", "Informe e-mail e senha.");
+    async signIn(identifier, password) {
+      const e = String(identifier ?? "").trim();
+      if (!e || !password) throw new AuthError("invalid_credentials", "Informe login e senha.");
       let res;
       try { res = await post("token?grant_type=password", { email: e, password }); }
       catch { throw new AuthError("network", "Sem conexão. Tente novamente."); }
       if (!res.ok) {
         if (res.status === 429) throw new AuthError("rate_limited", "Muitas tentativas. Aguarde um pouco.");
         if (res.status >= 500) throw new AuthError("generic", "Serviço indisponível. Tente novamente.");
-        throw new AuthError("invalid_credentials", "E-mail ou senha incorretos.");
+        throw new AuthError("invalid_credentials", "Login ou senha incorretos.");
       }
       const body = await res.json();
       save(toSession(body));
