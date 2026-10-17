@@ -1,8 +1,17 @@
 # Painel administrativo — Francine Furini Store (V1)
 
 HTML + CSS + módulos ES, sem framework e sem dependências em runtime (mesmo padrão do storefront, mas **independente**:
-nada é importado de `storefront/`). Autenticação por **Supabase Auth** (e-mail + senha); a autorização real é a **RLS**
-(`public.is_admin()`) e as RPCs administrativas do banco.
+nada é importado de `storefront/`). Autenticação por **Supabase Auth**; a interface aceita **login + senha** e converte logins simples para um identificador técnico interno. A autorização real continua sendo a **RLS** (`public.is_admin()`) e as RPCs administrativas do banco.
+
+## Login da cliente
+
+A tela pública do admin não pede e-mail. Um login como `Fran1010` é normalizado para o identificador técnico interno:
+
+`fran1010@admin.francine-furini.local`
+
+Esse identificador existe apenas para compatibilidade com o Supabase Auth e não precisa ser exibido para a cliente. O acesso técnico legado por e-mail continua aceito para não bloquear a administração da TaskZap.
+
+**Nunca versionar senha no repositório.** A senha deve existir somente no Supabase Auth e ser entregue à cliente por canal adequado.
 
 ## Rodar localmente
 
@@ -24,7 +33,7 @@ admin/
   js/app.js              login/gate (is_admin) + roteador por hash + shell
   js/lib/                regras puras (testadas em Node)
     config.js            valida config pública; recusa secrets
-    auth.js              Supabase Auth REST: login, refresh (single-flight), logout; guarda só tokens/id/e-mail
+    auth.js              Supabase Auth REST: login, refresh (single-flight), logout; guarda só tokens/id/e-mail técnico
     api.js               PostgREST + Storage com o JWT do admin; 401 -> refresh -> repete 1x -> volta ao login
     money.js             R$ <-> centavos por string (sem ponto flutuante)
     photos.js            fila de fotos em memória + envio ordenado (criação e edição)
@@ -47,9 +56,10 @@ admin/
   Upload: arquivo primeiro, depois a linha no banco (se o insert falhar, o arquivo é apagado). Remoção: banco primeiro (a loja
   para de exibir), depois o arquivo; se o Storage falhar, o painel avisa do arquivo órfão — nunca fica foto quebrada na loja.
 - **Sessão**: tokens em `localStorage` (como o supabase-js); senha nunca é guardada nem logada. Não admin vê "Acesso negado" e pode sair.
+- **Login simples**: a conversão para o identificador técnico é apenas conveniência de UX. Segurança/permissão continuam no Supabase Auth + `private.admin_users`/RLS.
 - Nenhuma migration nova foi necessária: policies, grants e RPCs existentes cobrem o painel.
 
 ## Testes
 
-`npm test` → `tests/admin/` (auth/não-admin/sessão, config, dinheiro, payloads, upload, ciclo de pedidos). O fluxo no navegador foi
+`npm test` → `tests/admin/` (auth/não-admin/sessão, login por usuário, config, dinheiro, payloads, upload, ciclo de pedidos). O fluxo no navegador foi
 verificado com Chromium contra um mock do Supabase.
