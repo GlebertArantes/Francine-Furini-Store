@@ -2,7 +2,7 @@
 // (o navegador é anônimo): supabase functions deploy create-order --no-verify-jwt
 // Env (injetadas pelo Supabase / definidas via `supabase secrets set`, nunca no Git):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ALLOWED_ORIGINS (lista separada por vírgula)
-import { createHandler, memoryRateLimiter } from "./handler.ts";
+import { createHandler, memoryRateLimiter, parseAllowedOrigins } from "./handler.ts";
 
 declare const Deno: { env: { get(k: string): string | undefined }; serve(h: (r: Request) => Promise<Response>): void };
 
@@ -12,10 +12,15 @@ const need = (k: string) => {
   return v;
 };
 
+// Produção: ALLOWED_ORIGINS=https://francinefurinistore.com.br,https://francine-furini-store.pages.dev
+const allowed = parseAllowedOrigins(Deno.env.get("ALLOWED_ORIGINS"));
+if (allowed.rejected > 0) console.warn(`ALLOWED_ORIGINS: ${allowed.rejected} entrada(s) inválida(s) ignorada(s) (curingas, barra final ou esquema não permitido).`);
+if (allowed.origins.length === 0) console.warn("ALLOWED_ORIGINS vazio: nenhuma origem de navegador autorizada.");
+
 Deno.serve(createHandler({
   supabaseUrl: need("SUPABASE_URL"),
   serviceRoleKey: need("SUPABASE_SERVICE_ROLE_KEY"),
-  allowedOrigins: (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  allowedOrigins: allowed.origins,
   fetch,
   rateLimit: memoryRateLimiter(),
 }));
