@@ -4,14 +4,15 @@ Loja virtual da **Francine Furini Store**, desenvolvida pela TaskZap.
 
 ## Status
 
-**V1 em pré-entrega.** O núcleo técnico já foi implementado e validado em produção com produto e pedido de teste. Falta a validação operacional da Francine com um produto real, criação do acesso administrativo dela e a troca dos dados finais de entrega.
+**V1 em pré-entrega.** O núcleo técnico já foi implementado e validado em produção com produto e pedido de teste. Falta a validação operacional da Francine com um produto real, criação efetiva do usuário administrativo dela no Supabase Auth e a configuração dos dados finais de entrega.
 
 ## Produção
 
-- Storefront: `https://francine-furini-store.pages.dev`
-- Admin: `https://francine-furini-admin.pages.dev`
+- Storefront atual: `https://francine-furini-store.pages.dev`
+- Admin atual: `https://francine-furini-admin.pages.dev`
 - Supabase exclusivo: projeto `txgatyftvtpkgqlncxju`
 - Branch de produção: `main`
+- Domínio próprio planejado: prioridade para `francinefurini.com.br`, com `www` apontando/redirecionando para a loja e `admin.francinefurini.com.br` para o painel, sujeito à disponibilidade no Registro.br.
 
 ## Escopo da V1
 
@@ -27,6 +28,7 @@ Loja virtual da **Francine Furini Store**, desenvolvida pela TaskZap.
 - Frete calculado manualmente pela Francine
 - Pagamento finalizado manualmente com a cliente
 - Painel administrativo protegido por autenticação
+- Login administrativo por usuário + senha na interface (Supabase Auth permanece como autoridade interna)
 - Supabase exclusivo para a Francine Furini Store
 - Política de Privacidade e Termos de Uso/Compra
 - SEO/social básico e favicon
@@ -49,9 +51,11 @@ O fluxo completo foi validado em produção com o pedido de teste `FF-171026-001
 
 - Produto `Vestido Aurora — TESTE`: inativo.
 - Variante de teste: inativa.
-- Pedido de teste: preservado como concluído para histórico/auditoria.
+- Pedido de teste concluído: preservado para histórico/auditoria.
+- Pedido de teste cancelado: preservado para histórico/auditoria.
 - WhatsApp temporário de testes: `5534984258056`.
 - WhatsApp oficial da Francine para a entrega: `5531995652798`.
+- Login planejado para a cliente: `Fran1010` (a senha nunca deve ser versionada no repositório).
 
 Não trocar para o WhatsApp oficial antes do aceite final da cliente.
 
@@ -75,7 +79,7 @@ npm run test:sql
 npm run test:all
 ```
 
-A suíte cobre regras de pedido, preço, estoque, permissões, catálogo, storefront, admin e concorrência do ciclo crítico.
+A suíte cobre regras de pedido, preço, estoque, permissões, catálogo, storefront, admin, login por usuário e concorrência do ciclo crítico.
 
 ## Antes da entrega final
 
@@ -85,9 +89,9 @@ Dependências da cliente no aceite final:
 
 - cadastrar/testar ao menos um produto real pelo painel;
 - validar fotos, variantes, estoque e edição;
-- criar/entregar o usuário administrador da Francine;
+- criar/entregar efetivamente o usuário administrador da Francine no Supabase Auth;
 - confirmar CEP/origem da loja e Instagram;
-- decidir domínio próprio versus `pages.dev`;
+- registrar/configurar o domínio próprio escolhido;
 - trocar o WhatsApp temporário pelo oficial;
 - rodar smoke final de produção.
 
