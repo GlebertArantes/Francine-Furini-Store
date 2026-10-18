@@ -66,14 +66,15 @@ export function homeView(ctx, query) {
       body.append(stateBlock("Nenhuma peça encontrada", "Tente outros filtros ou limpe a busca.", h("a", { class: "btn secondary", href: "#/" }, "Ver tudo")));
     } else {
       const feat = !filtered ? featuredProducts(products) : [];
-      if (feat.length) {
-        body.append(h("div", { class: "section-head" }, h("h2", {}, "Destaques")),
-          h("ul", { class: "grid" }, feat.map((p) => productCard(ctx, p))),
+      const gridOf = (items) => h("ul", { class: `grid${items.length === 1 ? " is-single" : ""}` }, items.map((p) => productCard(ctx, p)));
+      // "Destaques" só quando há OUTRAS peças além delas (evita mostrar a mesma peça duas vezes em coleções pequenas).
+      if (feat.length && list.length > feat.length) {
+        body.append(h("div", { class: "section-head" }, h("h2", {}, "Destaques")), gridOf(feat),
           h("div", { class: "section-head", style: "margin-top:3.5rem" }, h("h2", {}, "Toda a coleção")));
       } else if (!filtered) {
         body.append(h("div", { class: "section-head" }, h("h2", {}, "Coleção")));
       }
-      body.append(h("ul", { class: "grid" }, list.map((p) => productCard(ctx, p))));
+      body.append(gridOf(list));
     }
     parts.push(body);
     if (!filtered) parts.push(h("div", { class: "wrap" }, howToBuySection()));

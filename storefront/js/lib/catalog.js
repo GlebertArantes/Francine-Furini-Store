@@ -17,7 +17,10 @@ export function compareSizes(a, b) {
   return ga - gb || na - nb || sa.localeCompare(sb, "pt-BR");
 }
 
-export const inStock = (v) => (v?.quantity ?? 0) > 0;
+/** Variante inativa nunca é exibida nem conta como disponível (a RLS já a oculta; aqui é defesa em profundidade). */
+export const isActiveVariant = (v) => v?.active !== false;
+export const activeVariants = (p) => (p.variants ?? []).filter(isActiveVariant);
+export const inStock = (v) => isActiveVariant(v) && (v?.quantity ?? 0) > 0;
 export const isSoldOut = (p) => !(p.variants ?? []).some(inStock);
 
 export function priceInfo(p) {
@@ -36,7 +39,7 @@ export function facets(products) {
   const sizes = new Set();
   const colors = new Map(); // fold -> label original
   for (const p of products) {
-    for (const v of p.variants ?? []) {
+    for (const v of activeVariants(p)) {
       sizes.add(v.size.trim());
       const k = fold(v.color);
       if (!colors.has(k)) colors.set(k, v.color.trim());
@@ -65,7 +68,7 @@ export function filterProducts(products, f = {}, categories = []) {
     }
     if (f.onlyAvailable && isSoldOut(p)) return false;
     if (size || color) {
-      return (p.variants ?? []).some(
+      return activeVariants(p).some(
         (v) =>
           (!size || fold(v.size) === size) &&
           (!color || fold(v.color) === color) &&
@@ -81,7 +84,7 @@ export const featuredProducts = (products, limit = 4) =>
 
 export function colorsOf(p) {
   const seen = new Map();
-  for (const v of p.variants ?? []) {
+  for (const v of activeVariants(p)) {
     const k = fold(v.color);
     const cur = seen.get(k) ?? { color: v.color.trim(), available: false };
     cur.available ||= inStock(v);
@@ -91,7 +94,7 @@ export function colorsOf(p) {
 }
 
 export function sizesOfColor(p, color) {
-  return (p.variants ?? [])
+  return activeVariants(p)
     .filter((v) => fold(v.color) === fold(color))
     .sort((a, b) => compareSizes(a.size, b.size));
 }
@@ -113,7 +116,7 @@ export function cartLine(product, variant, imageUrl) {
 export function variantIndex(products, imageUrlOf = () => null) {
   const map = new Map();
   for (const p of products) {
-    for (const v of p.variants ?? []) {
+    for (const v of activeVariants(p)) {
       const line = cartLine(p, v, imageUrlOf(p));
       map.set(v.id, { product_id: p.id, stock: v.quantity, ref: line.ref });
     }
