@@ -18,7 +18,7 @@ test("Como comprar: 4 passos do fluxo real, na ordem, e aviso explícito (sem pa
   const text = textOf(root);
   for (const [t] of STEPS) assert.ok(text.includes(t));
   assert.match(text, /A Francine calcula o frete, combina o pagamento/);
-  assert.match(text, /Toque no botão do WhatsApp/);
+  assert.match(text, /toque em Enviar pedido pelo WhatsApp/i);
   assert.match(NOTICE, /não é confirmação de pagamento nem reserva de estoque/);
   assert.ok(text.includes(NOTICE));
   assert.equal(findAll(root, (e) => e.tag === "li").length, 4);
