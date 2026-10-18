@@ -9,7 +9,6 @@ import { dashboardView } from "./views/dashboard.js";
 import { categoriesView } from "./views/categories.js";
 import { productsListView, productEditView } from "./views/products.js";
 import { ordersListView, orderDetailView } from "./views/orders.js";
-import { settingsView } from "./views/settings.js";
 
 const appEl = document.getElementById("app");
 
@@ -49,7 +48,7 @@ function boot() {
   function showLogin(notice) { mode = "login"; appEl.replaceChildren(loginView(ctx, notice)); }
 
   const main = h("main", { id: "main", tabindex: "-1" });
-  const links = [["#/", "Painel"], ["#/pedidos", "Pedidos"], ["#/produtos", "Produtos"], ["#/categorias", "Categorias"], ["#/configuracoes", "Loja"]];
+  const links = [["#/", "Painel"], ["#/pedidos", "Pedidos"], ["#/produtos", "Produtos"], ["#/categorias", "Categorias"]];
   const nav = h("nav", { class: "nav", "aria-label": "Principal" }, links.map(([href, label]) => h("a", { href, "data-href": href }, label)));
   const who = h("span", { class: "who muted small" });
   const shell = h("div", { class: "shell" },
@@ -64,13 +63,14 @@ function boot() {
     const [path, qs] = raw.split("?");
     const query = new URLSearchParams(qs ?? "");
     const p = path.split("/").filter(Boolean);
+    // A antiga aba "Loja" foi retirada do painel. Links antigos voltam ao Painel.
+    if (p[0] === "configuracoes") { ctx.navigate("#/"); return; }
     let view;
     if (p[0] === "pedidos" && p[1]) view = orderDetailView(ctx, p[1]);
     else if (p[0] === "pedidos") view = ordersListView(ctx, query);
     else if (p[0] === "produtos" && p[1]) view = productEditView(ctx, p[1]);
     else if (p[0] === "produtos") view = productsListView(ctx);
     else if (p[0] === "categorias") view = categoriesView(ctx);
-    else if (p[0] === "configuracoes") view = settingsView(ctx);
     else view = dashboardView(ctx);
     const base = "#/" + (p[0] ?? "");
     nav.querySelectorAll("a").forEach((a) => a.toggleAttribute("aria-current", (a.dataset.href === base) || (a.dataset.href === "#/" && !p[0])));
