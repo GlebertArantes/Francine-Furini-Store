@@ -1,6 +1,7 @@
 import { h } from "../lib/dom.js";
 import { formatBRL, centsToInput } from "../lib/money.js";
-import { validateProduct, validateVariant, slugify, stockLevel, validateImageFile, reorderImages, isoToLocalInput } from "../lib/rules.js";
+import { validateProduct, validateVariant, slugify, stockLevel, reorderImages, isoToLocalInput, NEW_PRODUCT_DEFAULTS, visibilityInfo, publishWarnings } from "../lib/rules.js";
+import { shouldShrink, shrinkImage } from "../lib/image-resize.js";
 import { loadInto, guard, toast, field, showFieldErrors, confirmDialog, stateBox } from "../lib/ui.js";
 import { createPhotoQueue, uploadPhotos, createProductWithPhotos, summarizeUpload } from "../lib/photos.js";
 
@@ -50,9 +51,8 @@ export function productEditView(ctx, id) {
         h("h1", {}, product ? product.name : "Novo produto"),
         ctx.flash ? flashNotice(ctx) : null,
         productForm(ctx, categories, product, draw, newPhotos),
-        product ? variantsSection(ctx, product, draw) : h("p", { class: "notice" }, "Salve o produto para adicionar variantes (cor/tamanho/estoque). As fotos escolhidas abaixo são enviadas junto com a criação."),
-        product ? imagesSection(ctx, product, draw)
-          : h("section", { class: "panel" }, h("h2", {}, "Fotos do produto"), h("p", { class: "muted small" }, "Opcional. As fotos só são enviadas quando você clicar em “Criar produto”."), newPhotos.el)].filter(Boolean));
+        product ? variantsSection(ctx, product, draw) : h("p", { class: "notice" }, "Depois de criar o produto, você cadastra as cores, tamanhos e o estoque."),
+        product ? imagesSection(ctx, product, draw) : null].filter(Boolean));
     });
   draw();
   return root;
@@ -60,52 +60,73 @@ export function productEditView(ctx, id) {
 
 function productForm(ctx, categories, p, redraw, photos) {
   const val = (v) => v ?? "";
-  const inp = (name, v, attrs = {}) => h("input", { name, value: val(v), type: "text", ...attrs });
-  const name = inp("name", p?.name, { maxlength: 160, required: true });
-  const slug = inp("slug", p?.slug, { maxlength: 80, autocapitalize: "off" });
+  const inp = (name, v, attrs = {}) => h("input", { name, value: val(v), type: "text", autocomplete: "off", ...attrs });
+  const name = inp("name", p?.name, { maxlength: 160, required: true, autocapitalize: "sentences", enterkeyhint: "next" });
+  const slug = inp("slug", p?.slug, { maxlength: 80, autocapitalize: "off", spellcheck: "false" });
   if (!p) name.addEventListener("input", () => { if (!slug.dataset.touched) slug.value = slugify(name.value); });
   slug.addEventListener("input", () => { slug.dataset.touched = "1"; });
   const cat = h("select", { name: "category_id" }, h("option", { value: "" }, "Sem categoria"),
     categories.map((c) => h("option", { value: c.id, selected: c.id === p?.category_id }, c.active ? c.name : `${c.name} (inativa)`)));
-  const price = inp("price", p ? centsToInput(p.price_cents) : "", { inputmode: "decimal", placeholder: "249,90" });
-  const compare = inp("compare_at", p ? centsToInput(p.compare_at_price_cents) : "", { inputmode: "decimal", placeholder: "opcional" });
-  const sku = inp("sku", p?.sku, { maxlength: 60 });
-  const fabric = inp("fabric", p?.fabric, { maxlength: 120 });
-  const desc = h("textarea", { name: "description", rows: 5 }, val(p?.description));
+  const price = inp("price", p ? centsToInput(p.price_cents) : "", { inputmode: "decimal", placeholder: "249,90", enterkeyhint: "next" });
+  const compare = inp("compare_at", p ? centsToInput(p.compare_at_price_cents) : "", { inputmode: "decimal", placeholder: "opcional", enterkeyhint: "next" });
+  const sku = inp("sku", p?.sku, { maxlength: 60, autocapitalize: "characters" });
+  const fabric = inp("fabric", p?.fabric, { maxlength: 120, autocapitalize: "sentences" });
+  const desc = h("textarea", { name: "description", rows: 5, autocapitalize: "sentences" }, val(p?.description));
   const pub = h("input", { name: "published_at", type: "datetime-local", value: isoToLocalInput(p?.published_at) });
   const featured = h("input", { name: "featured", type: "checkbox", checked: !!p?.featured });
-  const active = h("input", { name: "active", type: "checkbox", checked: p ? p.active : true });
+  // Produto novo nasce OCULTO (rascunho): publicar é decisão explícita.
+  const active = h("input", { name: "active", type: "checkbox", checked: p ? p.active : NEW_PRODUCT_DEFAULTS.active });
+  const vis = h("div", { class: "vis", role: "status", "aria-live": "polite" });
+  const updateVis = () => {
+    let iso = null; try { iso = pub.value ? new Date(pub.value).toISOString() : null; } catch { /* data inválida: validada ao salvar */ }
+    const i = visibilityInfo({ active: active.checked, published_at: iso });
+    vis.className = `vis vis-${i.state}`; // vis-hidden (não usar a classe 'hidden': é utilidade display:none)
+    vis.replaceChildren(h("strong", {}, i.label), h("span", {}, ` — ${i.detail}`));
+  };
+  active.addEventListener("change", updateVis); pub.addEventListener("input", updateVis); updateVis();
   const btn = h("button", { type: "submit", class: "btn" }, p ? "Salvar alterações" : "Criar produto");
 
   const form = h("form", { class: "panel", novalidate: true },
     h("div", { class: "grid2" },
-      field("name", "Nome", name), field("slug", "Slug (endereço)", slug, "Gerado do nome; só minúsculas, números e hífens."),
-      field("category_id", "Categoria", cat), field("sku", "SKU (opcional)", sku),
-      field("price", "Preço atual (R$)", price), field("compare_at", "Preço anterior (R$) — opcional", compare, "Se preenchido, a loja mostra como preço promocional. Deve ser ≥ preço atual."),
-      field("fabric", "Tecido", fabric), field("published_at", "Publicar em (opcional)", pub, "Vazio = visível assim que ativo.")),
+      field("name", "Nome do produto", name), field("category_id", "Categoria", cat),
+      field("price", "Preço atual (R$)", price),
+      field("compare_at", "Preço anterior (R$) — opcional", compare, "Para promoção: a loja mostra o preço anterior riscado. Deve ser maior ou igual ao preço atual."),
+      field("fabric", "Tecido", fabric)),
     field("description", "Descrição", desc),
+    !p ? h("section", { class: "subpanel" }, h("h2", {}, "Fotos do produto"),
+      h("p", { class: "muted small" }, "Opcional. As fotos só são enviadas quando você tocar em “Criar produto”."), photos.el) : null,
     h("div", { class: "checks" }, h("label", { class: "check" }, featured, "Destaque na home"), h("label", { class: "check" }, active, "Ativo (visível na loja)")),
+    vis,
+    h("details", { class: "more" }, h("summary", {}, "Mais opções (endereço da página, SKU, agendar publicação)"),
+      h("div", { class: "grid2" }, field("slug", "Endereço da página (slug)", slug, "Gerado do nome; só minúsculas, números e hífens."), field("sku", "SKU (opcional)", sku),
+        field("published_at", "Publicar em (opcional)", pub, "Vazio = visível assim que estiver ativo."))),
     btn);
   const save = guard(btn, async () => {
     const v = validateProduct({ name: name.value, slug: slug.value, category_id: cat.value, sku: sku.value, price: price.value, compare_at: compare.value,
       fabric: fabric.value, description: desc.value, published_at: pub.value, featured: featured.checked, active: active.checked });
     showFieldErrors(form, v.errors);
     if (!v.ok) return;
+    // Proteção contra publicação acidental: ao PUBLICAR (novo ativo ou rascunho -> ativo) pede confirmação e avisa o que falta.
+    if (v.payload.active && (!p || !p.active)) {
+      const warnings = publishWarnings(p ? { photos: (p.product_images ?? []).length, variants: p.product_variants ?? [] } : { photos: photos.queue.valid().length, variants: null });
+      const ok = await confirmDialog({ title: "Publicar na loja agora?", text: `As clientes poderão ver e comprar este produto assim que você confirmar.${warnings.length ? ` Atenção: ${warnings.join(" ")}` : ""}`, confirmLabel: "Publicar" });
+      if (!ok) return;
+    }
     try {
-      if (p) { await ctx.api.updateProduct(p.id, v.payload); toast("Produto salvo."); redraw(); }
+      if (p) { await ctx.api.updateProduct(p.id, v.payload); toast(v.payload.active ? "Produto salvo." : "Produto salvo (oculto da loja)."); redraw(); }
       else {
         // 1) cria o produto (falhou => nada é enviado e a seleção de fotos permanece); 2) envia as fotos com o ID retornado.
-        const r = await createProductWithPhotos(ctx.api, v.payload, photos.queue);
+        const r = await createProductWithPhotos(ctx.api, v.payload, photos.queue, { onProgress: ({ done, total }) => { btn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
         if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
         const sum = summarizeUpload(r);
         ctx.flash = sum.hasProblem ? { type: "error", text: `Produto criado, mas houve problemas com as fotos. ${sum.text}` } : null;
-        toast(sum.hasProblem ? "Produto criado, mas algumas fotos falharam." : `Produto criado.${sum.text ? " " + sum.text : ""} Adicione as variantes.`, sum.hasProblem ? "error" : "ok");
+        toast(sum.hasProblem ? "Produto criado, mas algumas fotos falharam." : `Produto criado${v.payload.active ? "" : " (oculto da loja)"}.${sum.text ? " " + sum.text : ""} Agora cadastre as variantes.`, sum.hasProblem ? "error" : "ok");
         photos.reset();
         ctx.navigate(`#/produtos/${r.product.id}`);
       }
     } catch (e) {
       if (ctx.fail(e)) return;
-      if (e.status === 409) showFieldErrors(form, /sku/i.test(e.details ?? e.message ?? "") ? { sku: "Já existe um produto com esse SKU." } : { slug: "Já existe um produto com esse slug." });
+      if (e.status === 409) showFieldErrors(form, /sku/i.test(e.details ?? e.message ?? "") ? { sku: "Já existe um produto com esse SKU." } : { slug: "Já existe um produto com esse endereço (slug). Altere em “Mais opções”." });
       else toast("Não foi possível salvar o produto. Confira os dados e tente novamente.", "error");
     }
   });
@@ -123,16 +144,19 @@ function variantsSection(ctx, p, redraw) {
 }
 
 function variantRow(ctx, p, v, redraw) {
-  const color = h("input", { name: "color", value: v?.color ?? "", maxlength: 80, "aria-label": "Cor", placeholder: "Cor" });
-  const size = h("input", { name: "size", value: v?.size ?? "", maxlength: 40, "aria-label": "Tamanho", placeholder: "Tamanho (P, 38, Único…)" });
-  const sku = h("input", { name: "sku", value: v?.sku ?? "", maxlength: 60, "aria-label": "SKU", placeholder: "SKU" });
-  const qty = h("input", { name: "quantity", value: String(v?.quantity ?? 0), inputmode: "numeric", "aria-label": "Quantidade em estoque", size: 5 });
-  const active = h("input", { name: "active", type: "checkbox", checked: v ? v.active : true, "aria-label": "Ativa" });
+  const color = h("input", { name: "color", value: v?.color ?? "", maxlength: 80, placeholder: "Ex.: Terra", autocomplete: "off", autocapitalize: "sentences", enterkeyhint: "next" });
+  const size = h("input", { name: "size", value: v?.size ?? "", maxlength: 40, placeholder: "P, M, 38, Único…", autocomplete: "off", autocapitalize: "characters", enterkeyhint: "next" });
+  const sku = h("input", { name: "sku", value: v?.sku ?? "", maxlength: 60, placeholder: "opcional", autocomplete: "off", autocapitalize: "characters" });
+  const qty = h("input", { name: "quantity", value: String(v?.quantity ?? 0), inputmode: "numeric", pattern: "[0-9]*", enterkeyhint: "done", autocomplete: "off" });
+  const active = h("input", { name: "active", type: "checkbox", checked: v ? v.active : true });
+  const mini = (text, input) => h("label", { class: "mini" }, h("span", {}, text), input);
   const err = h("p", { class: "err", role: "alert" });
   const level = v ? stockLevel(v) : null;
   const saveBtn = h("button", { type: "submit", class: "btn small" }, v ? "Salvar" : "Adicionar");
-  const form = h("form", { class: "inline-form", novalidate: true }, color, size, sku, qty, h("label", { class: "check" }, active, "Ativa"),
-    v && level !== "ok" ? h("span", { class: `pill ${level === "out" ? "off" : "warn"}` }, level === "out" ? "Esgotada" : "Estoque baixo") : null, saveBtn, err);
+  const form = h("form", { class: "variant-form", novalidate: true }, mini("Cor", color), mini("Tamanho", size), mini("Quantidade em estoque", qty), mini("SKU", sku),
+    h("div", { class: "vstate" }, h("label", { class: "check" }, active, "Ativa (visível na loja)"),
+      v && level !== "ok" ? h("span", { class: `pill ${level === "out" ? "off" : "warn"}` }, level === "out" ? "Esgotada" : "Estoque baixo") : null),
+    h("div", { class: "vactions" }, saveBtn), err);
   const save = guard(saveBtn, async () => {
     const r = validateVariant({ color: color.value, size: size.value, sku: sku.value, quantity: qty.value, active: active.checked });
     err.textContent = Object.values(r.errors)[0] ?? "";
@@ -158,7 +182,7 @@ function variantRow(ctx, p, v, redraw) {
       }
     });
     delBtn.addEventListener("click", del);
-    form.append(delBtn);
+    form.querySelector(".vactions").append(delBtn);
   }
   return li;
 }
@@ -166,13 +190,13 @@ function variantRow(ctx, p, v, redraw) {
 // ---------------------------------------------------------------- imagens
 function imagesSection(ctx, p, redraw) {
   const images = [...(p.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
-  const pk = photoPicker({ onChange: (has) => { uploadBtn.disabled = !has; } });
   const uploadBtn = h("button", { type: "button", class: "btn", disabled: true }, "Enviar fotos");
+  const pk = photoPicker({ onChange: (has) => { uploadBtn.disabled = !has; } });
   let moving = false;
 
   const upload = guard(uploadBtn, async () => {
     const start = images.reduce((m, i) => Math.max(m, i.sort_order), -1) + 1;
-    const r = await uploadPhotos(ctx.api, p.id, pk.queue.valid(), start);
+    const r = await uploadPhotos(ctx.api, p.id, pk.queue.valid(), start, { onProgress: ({ done, total }) => { uploadBtn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
     if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
     const sum = summarizeUpload(r);
     if (sum.text) toast(sum.text, sum.hasProblem ? "error" : "ok");
@@ -229,9 +253,13 @@ function photoPicker({ onChange } = {}) {
   const queue = createPhotoQueue();
   const urls = new Map();
   const id = `pick-${Math.random().toString(36).slice(2, 6)}`;
-  const input = h("input", { type: "file", id, accept: "image/jpeg,image/png,image/webp,image/avif", multiple: true });
+  // O input nativo fica oculto (porém focável); o botão em português abre a galeria do celular.
+  const input = h("input", { type: "file", id, class: "file-input", accept: "image/jpeg,image/png,image/webp,image/avif", multiple: true });
+  const pick = h("label", { class: "btn secondary", for: id }, "Escolher fotos da galeria");
+  const status = h("p", { class: "muted small", role: "status", "aria-live": "polite" });
   const list = h("div", { class: "previews" });
-  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada. A ordem de seleção é a ordem das fotos (a primeira é a principal).");
+  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada (fotos maiores são reduzidas automaticamente). A ordem de seleção é a ordem das fotos: a primeira é a principal.");
+  let note = "";
 
   const draw = () => {
     list.replaceChildren(...queue.items.map((it, i) => {
@@ -243,13 +271,28 @@ function photoPicker({ onChange } = {}) {
         h("figcaption", {}, it.check.ok ? `${i === 0 ? "Principal · " : ""}${it.file.name}` : it.file.name),
         it.check.ok ? alt : h("p", { class: "err" }, it.check.error), rm);
     }));
-    onChange?.(queue.valid().length > 0);
+    const n = queue.valid().length;
+    status.textContent = `${n ? `${n} foto(s) pronta(s) para enviar.` : "Nenhuma foto selecionada."}${note ? ` ${note}` : ""}`;
+    onChange?.(n > 0);
   };
-  input.addEventListener("change", () => { queue.add([...input.files]); input.value = ""; draw(); });
+  input.addEventListener("change", async () => {
+    const files = [...input.files]; input.value = "";
+    const prepared = []; let shrunk = 0;
+    for (const f of files) {
+      if (shouldShrink(f)) {
+        status.textContent = `Reduzindo a foto grande “${f.name}”…`;
+        try { prepared.push(await shrinkImage(f)); shrunk++; continue; } catch { /* mantém o original: será sinalizado como grande demais */ }
+      }
+      prepared.push(f);
+    }
+    note = shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : "";
+    queue.add(prepared); draw();
+  });
+  draw();
 
   return {
     queue,
-    el: h("div", { class: "photo-picker" }, h("label", { for: id }, "Adicionar fotos"), input, info, list),
-    reset() { for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); draw(); },
+    el: h("div", { class: "photo-picker" }, input, pick, status, info, list),
+    reset() { for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
   };
 }

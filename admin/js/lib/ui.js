@@ -45,7 +45,9 @@ export function showFieldErrors(form, errors = {}) {
     if (p) p.textContent = errors[el.name] ?? "";
     if (errors[el.name]) el.setAttribute("aria-invalid", "true"); else el.removeAttribute("aria-invalid");
   }
-  form.querySelector('[aria-invalid="true"]')?.focus();
+  const bad = form.querySelector('[aria-invalid="true"]');
+  bad?.closest("details")?.setAttribute("open", ""); // campo com erro dentro de "Mais opções": abre antes de focar
+  bad?.focus();
 }
 
 export function field(name, label, input, hint) {
