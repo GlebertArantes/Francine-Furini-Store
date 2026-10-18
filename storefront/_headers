@@ -5,3 +5,18 @@
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://txgatyftvtpkgqlncxju.supabase.co; connect-src 'self' https://txgatyftvtpkgqlncxju.supabase.co wss://txgatyftvtpkgqlncxju.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+
+# Arquivos sem hash de versao: revalidar em toda navegacao para nao misturar
+# imports ES antigos e novos apos um deploy (ex.: card.js + catalog.js).
+# Assets com nome versionado (.v1, .v2) mantem o cache padrao do Pages.
+/
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/*.js
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: no-cache, max-age=0, must-revalidate
