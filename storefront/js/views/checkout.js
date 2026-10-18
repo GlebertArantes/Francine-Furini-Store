@@ -50,8 +50,8 @@ export function checkoutView(ctx) {
         f("note", "Observação (opcional)", { tag: "textarea", maxlength: 500 })),
       h("p", { class: "muted", style: "font-size:.875rem" }, "Ao enviar, a Francine calculará o frete e entrará em contato para fechar o pagamento manualmente. Nada é cobrado agora."),
       h("p", { class: "legal-consent" }, "Os dados informados serão usados para atender esta solicitação. Ao continuar, você declara que leu a ",
-        h("a", { href: "#/privacidade", target: "_blank" }, "Política de Privacidade"), " e os ",
-        h("a", { href: "#/termos", target: "_blank" }, "Termos de Uso e Compra"), "."),
+        h("a", { href: "#/privacidade", target: "_blank", rel: "noopener noreferrer" }, "Política de Privacidade"), " e os ",
+        h("a", { href: "#/termos", target: "_blank", rel: "noopener noreferrer" }, "Termos de Uso e Compra"), "."),
       submit);
 
     if (saved) for (const [k, v] of Object.entries(saved)) if (form.elements[k]) form.elements[k].value = v;
