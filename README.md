@@ -32,11 +32,12 @@ Loja virtual da **Francine Furini Store**, desenvolvida pela TaskZap.
 - Geração de pedido/solicitação de compra
 - Frete calculado manualmente pela Francine
 - Pagamento finalizado manualmente com a cliente
-- Painel administrativo protegido por autenticação
+- Painel administrativo protegido por autenticação (produto novo nasce **oculto/rascunho**; publicar pede confirmação)
 - Login administrativo por usuário + senha na interface (Supabase Auth permanece como autoridade interna)
 - Supabase exclusivo para a Francine Furini Store
 - Política de Privacidade e Termos de Uso/Compra
 - SEO/social básico e favicon
+- Seção “Como comprar” e cabeçalho pronto para a logo oficial (aguardando o arquivo original da Francine)
 
 ## Fluxo comercial validado
 
@@ -87,6 +88,8 @@ npm run test:all
 A suíte cobre regras de pedido, preço, estoque, permissões, catálogo, storefront, admin, login por usuário e concorrência do ciclo crítico.
 
 ## Antes da entrega final
+
+Documentos úteis: [`docs/AUDITORIA_V1.md`](docs/AUDITORIA_V1.md) (auditoria de checkout, riscos de segurança e mobile) e [`docs/MANUAL_FRANCINE.md`](docs/MANUAL_FRANCINE.md) (manual da cliente).
 
 O checklist rastreável está no GitHub Issue **#9 — Pré-entrega V1 — checklist final de lançamento**.
 

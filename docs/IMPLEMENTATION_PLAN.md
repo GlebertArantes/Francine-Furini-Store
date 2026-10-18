@@ -113,6 +113,19 @@ Status: **concluída e validada**.
 - [ ] validar metatags/favicon após deploy
 - [ ] AVIF manual em navegador real (não bloqueador se inconclusivo)
 
+### Rodada final de qualidade e segurança (18/10/2026)
+
+- [x] Auditoria do checkout (preço no servidor, inativos, estoque, duplicidade, rede, frete, idempotência, cancelamento, concorrência, histórico) — `docs/AUDITORIA_V1.md`
+- [x] Auditoria de segurança com riscos classificados; testes de catálogo do banco (RLS, grants, SECURITY DEFINER, Storage)
+- [x] Edge Function: limite por bytes, falha do banco com resposta controlada; HSTS; `rel=noopener`
+- [x] Testes Node com rede real bloqueada; varredura de segredos / outros clientes / sinks de XSS
+- [x] Cadastro de produto pelo celular: rascunho por padrão, indicador, confirmação ao publicar, fotos no formulário, redução automática de fotos > 8 MB
+- [x] Vitrine: paleta da marca, “Como comprar”, estrutura para a logo oficial (sem logo/og:image improvisada)
+- [x] `docs/MANUAL_FRANCINE.md`
+- [ ] Anti-spam distribuído (Turnstile) — aguardando aprovação (ver `docs/AUDITORIA_V1.md`, seção 2.2)
+- [ ] Revogar conta temporária de teste após o teste no celular
+- [ ] Aplicar a logo oficial (header/favicon) e avaliar `og:image` quando o arquivo chegar
+
 ### Dependências do aceite da Francine
 
 - [ ] Francine cadastrar/testar ao menos um produto real pelo painel
