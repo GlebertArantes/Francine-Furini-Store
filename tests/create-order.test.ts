@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { validateOrderInput } from "../supabase/functions/create-order/validate.ts";
 import { createHandler, memoryRateLimiter } from "../supabase/functions/create-order/handler.ts";
 
@@ -178,4 +179,67 @@ test("parseAllowedOrigins: valor de produção, normalização e rejeição de c
 test("CORS: sem ALLOWED_ORIGINS nenhuma origem de navegador é aceita", async () => {
   const handler = createHandler({ supabaseUrl: "https://x.supabase.co", serviceRoleKey: "k", allowedOrigins: parseAllowedOrigins("").origins, rateLimit: () => true, fetch: (async () => Response.json({})) as any });
   assert.equal((await handler(fromOrigin(OFFICIAL))).status, 403);
+});
+
+// ---- Auditoria final: robustez, payload adulterado e vazamento ---------------------------------
+test("payload adulterado: campos extras (status, total, código, preço) nunca chegam ao banco", async () => {
+  const { handler, calls } = mk(() => Response.json({ order_id: "o", display_code: "FF-181026-001", status: "pending_shipping" }));
+  const b: any = good();
+  Object.assign(b, { status: "completed", subtotal_cents: 1, display_code: "FF-010100-001", shipping_cents: 0, __proto__: { admin: true } });
+  Object.assign(b.customer, { status: "completed", is_admin: true, id: "x", created_at: "2000-01-01" });
+  b.items[0] = { ...b.items[0], price_cents: 1, unit_price_cents: 1, line_total_cents: 1, product_id: "outro", name: "Hack" };
+  const res = await handler(post(b));
+  assert.equal(res.status, 201);
+  const sent = JSON.parse(calls[0].init.body);
+  assert.deepEqual(Object.keys(sent).sort(), ["p_customer", "p_items"]);
+  assert.deepEqual(Object.keys(sent.p_customer).sort(), ["address_line", "address_number", "city", "name", "neighborhood", "phone", "postal_code", "state"]);
+  assert.deepEqual(sent.p_items, [{ variant_id: V1, quantity: 2 }]);
+});
+
+test("texto do cliente: caracteres de controle removidos, tamanhos limitados, HTML tratado só como texto", () => {
+  const r = validateOrderInput({ ...good(), customer: { ...good().customer, name: "Ma\u0000ria\n\tSilva", note: "x".repeat(900), address_complement: "<img src=x onerror=alert(1)>" } });
+  assert.ok(r.ok);
+  assert.equal(r.value.customer.name, "Ma ria Silva");
+  assert.equal(r.value.customer.note!.length, 500);
+  assert.equal(r.value.customer.address_complement, "<img src=x onerror=alert(1)>"); // armazenado como texto; a interface usa textContent
+});
+
+test("corpo acima de 16 KB é recusado por BYTES (multibyte) e pelo Content-Length, sem ler o banco", async () => {
+  const { handler, calls } = mk(() => Response.json({}));
+  const multibyte = JSON.stringify({ ...good(), customer: { ...good().customer, note: "é".repeat(9000) } }); // ~18 KB em bytes, 9 mil caracteres
+  assert.ok(multibyte.length < 16 * 1024 && new TextEncoder().encode(multibyte).length > 16 * 1024);
+  assert.equal((await handler(post(multibyte))).status, 413);
+  const declared = new Request("https://fn/x", { method: "POST", headers: { origin: "https://loja.example", "content-length": "999999" }, body: "{}" });
+  assert.equal((await handler(declared)).status, 413);
+  assert.equal(calls.length, 0);
+});
+
+test("banco indisponível ou resposta inesperada: JSON controlado com CORS, sem detalhes internos", async () => {
+  const down = mk(() => { throw new TypeError("connect ECONNREFUSED 10.0.0.1:5432 secret-host"); });
+  const r1 = await down.handler(post(good()));
+  assert.equal(r1.status, 503);
+  assert.deepEqual(await r1.json(), { error: "unavailable" });
+  assert.equal(r1.headers.get("access-control-allow-origin"), "https://loja.example");
+  const weird = mk(() => Response.json({ foo: "bar" }));
+  const r2 = await weird.handler(post(good()));
+  assert.equal(r2.status, 502);
+  assert.deepEqual(await r2.json(), { error: "unavailable" });
+});
+
+test("erros nunca expõem mensagem/detalhe do banco; sucesso não devolve PII", async () => {
+  const leaky = mk(() => Response.json({ message: "duplicate key value violates unique constraint orders_pkey", details: "Key (customer_phone)=(34999991234)", hint: "x" }, { status: 400 }));
+  const res = await leaky.handler(post(good()));
+  const text = await res.text();
+  assert.ok(!/duplicate|constraint|34999991234|orders_pkey/.test(text), text);
+  const ok = mk(() => Response.json({ order_id: "o", display_code: "FF-181026-001", status: "pending_shipping", customer_phone: "34999991234", customer_name: "Maria" }));
+  const t = await (await ok.handler(post(good()))).text();
+  assert.ok(!/34999991234|Maria/.test(t));
+});
+
+test("Edge Function não registra payload, PII nem chaves em logs", () => {
+  for (const f of ["handler.ts", "index.ts", "validate.ts"]) {
+    const src = fs.readFileSync(new URL(`../supabase/functions/create-order/${f}`, import.meta.url), "utf8");
+    assert.ok(!/console\.(log|info|debug|error)\(/.test(src), `${f}: sem console.log/error`);
+    for (const m of src.matchAll(/console\.warn\(([^;]*)\);/g)) assert.ok(!/serviceRoleKey|SERVICE_ROLE|body|payload|customer|phone/i.test(m[1]), `${f}: warn sem dados sensíveis`);
+  }
 });
