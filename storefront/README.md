@@ -61,3 +61,9 @@ storefront/
 - Paleta: marrom-terroso `#734335` e bege `#D2C3AE` (tokens em `css/styles.css`); contraste AA verificado por teste.
 - Seção “Como comprar” (`js/views/how-to-buy.js`) na home e em `#/como-comprar`, com o aviso de que a solicitação não é pagamento nem reserva de estoque.
 - Logo oficial: aguardando o arquivo original. Estrutura pronta em `js/lib/brand.js` e `assets/brand/README.md` (nenhuma logo improvisada, sem `og:image`).
+
+## Cards de produto (vitrine)
+
+- Modelo puro: `js/lib/card.js` (`cardModel`) — tudo é derivado do catálogo real (Supabase): promoção (`compare_at_price_cents > price_cents`), destaque (`featured`), categoria (só se cadastrada), contador de fotos (só com 2+), cores/tamanhos e estoque das variantes **ativas** (RLS já oculta inativas; o filtro é defensivo). Estoque numérico só aparece quando baixo (≤ 3 peças).
+- Render: `productCard` em `js/views/common.js`. Um único link (o título) é esticado por CSS (`.pcard-link::after`); o botão visual "Escolher cor e tamanho" é decorativo (`aria-hidden`), sem botões aninhados em links.
+- Nada de Pix promocional, parcelas, SKU ou rótulos inventados. Ponto de extensão futuro: `js/lib/payment-info.js` (`priceExtras`, hoje retorna `[]`). Quando houver regra comercial aprovada (Mercado Pago híbrido: frete manual + link de pagamento + webhook), basta preencher `PAYMENT_DISPLAY`/`priceExtras` com valores vindos do backend; os cards não precisam ser refeitos.

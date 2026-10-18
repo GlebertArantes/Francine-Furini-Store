@@ -93,17 +93,71 @@ h2 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); }
 .check { display: flex; gap: .6rem; align-items: center; min-height: 48px; cursor: pointer; }
 .check input { width: 1.15rem; height: 1.15rem; accent-color: var(--choc); }
 
-/* Grid de produtos */
-.grid { display: grid; gap: 2rem 1rem; grid-template-columns: repeat(2, 1fr); list-style: none; margin: 0; padding: 0; }
-@media (min-width: 48rem) { .grid { grid-template-columns: repeat(3, 1fr); gap: 2.5rem 1.5rem; } }
-@media (min-width: 64rem) { .grid { grid-template-columns: repeat(4, 1fr); } }
-.card { display: block; text-decoration: none; }
-.card .ph { position: relative; aspect-ratio: 3 / 4; background: var(--sand); overflow: hidden; }
-.card img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
-.card:hover img { transform: scale(1.03); }
-.card .soldout-tag { position: absolute; left: .6rem; bottom: .6rem; background: rgba(250,246,240,.92); padding: .15rem .6rem; font-size: .6875rem; letter-spacing: .16em; text-transform: uppercase; }
-.card.is-soldout img { opacity: .55; }
-.card h3 { font-size: 1.1875rem; margin-top: .85rem; }
+/* Grid + cards de produto ------------------------------------------------------------------ */
+.grid { display: grid; gap: 1.25rem .85rem; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; }
+@media (min-width: 48rem) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.75rem 1.25rem; } }
+@media (min-width: 64rem) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem 1.5rem; } }
+.grid.is-single { grid-template-columns: minmax(0, 24rem); justify-content: center; }
+.grid.is-single .pcard-head, .grid.is-single .pcard .price { min-height: 0; }
+.pcard-item { display: flex; min-width: 0; }
+.pcard { position: relative; display: flex; flex-direction: column; width: 100%; background: var(--paper); border: 1px solid var(--line); transition: border-color .2s, box-shadow .25s; }
+.pcard:hover { border-color: var(--nude); box-shadow: 0 10px 24px -16px rgba(58, 42, 32, .45); }
+.pcard:focus-within { outline: 2px solid var(--brown); outline-offset: 3px; }
+.pcard-link { color: inherit; text-decoration: none; }
+.pcard-link:focus-visible { outline: none; }
+.pcard-link::after { content: ""; position: absolute; inset: 0; z-index: 2; } /* um único link cobre o card inteiro (sem botões aninhados) */
+.pcard-media { position: relative; aspect-ratio: 4 / 5; background: var(--sand); overflow: hidden; }
+.pcard-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+.pcard:hover .pcard-media img { transform: scale(1.03); }
+.pcard.is-soldout .pcard-media img { opacity: .55; filter: grayscale(.25); }
+.pcard-badges { position: absolute; top: .55rem; left: .55rem; display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; z-index: 1; }
+.pcard-badge { font: 600 .6875rem/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; padding: .35rem .55rem; }
+.pcard-badge.sale { background: var(--brown); color: var(--cream); }
+.pcard-badge.featured { background: rgba(250, 246, 240, .94); color: var(--brown); border: 1px solid var(--nude); }
+.pcard-tag { position: absolute; left: .55rem; bottom: .55rem; background: rgba(250, 246, 240, .94); color: var(--choc); padding: .3rem .6rem; font: 600 .6875rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; z-index: 1; }
+.pcard-count { position: absolute; right: .55rem; bottom: .55rem; background: rgba(58, 42, 32, .8); color: var(--cream); font: 500 .75rem/1 var(--sans); padding: .35rem .6rem; border-radius: 999px; z-index: 1; }
+.pcard-body { display: flex; flex-direction: column; flex: 1; gap: .5rem; padding: .85rem .8rem .9rem; min-width: 0; }
+.pcard-head { min-height: 3.75rem; }
+.pcard-cat { margin: 0 0 .25rem; font: 500 .6875rem/1.3 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--taupe); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard-title { font-size: 1.0625rem; line-height: 1.2; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pcard .price { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: .05rem .5rem; font-size: .9375rem; min-height: 2.9em; align-content: flex-end; }
+.pcard .price s { margin: 0; }
+.pcard-extras p { margin: 0; font-size: .8125rem; color: var(--brown); }
+.pcard-opts { display: grid; gap: .35rem; align-content: start; min-height: 4.6rem; margin-bottom: .35rem; font-size: .8125rem; color: var(--brown); }
+.pcard-line { display: flex; align-items: baseline; gap: .5rem; margin: 0; min-width: 0; }
+.pcard-k { flex: none; min-width: 2rem; font-size: .625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--taupe); }
+.pcard-colors { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard-sizes { display: flex; flex-wrap: wrap; gap: .25rem; min-width: 0; list-style: none; margin: 0; padding: 0; }
+.pcard-sizes li { flex: none; border: 1px solid var(--nude); padding: 0 .4rem; font-size: .75rem; line-height: 1.55; white-space: nowrap; }
+.pcard-sizes li.more { border-style: dashed; color: var(--taupe); }
+.pcard-stock { display: flex; align-items: center; gap: .4rem; margin: 0; font-size: .75rem; }
+.pcard-stock::before { content: ""; flex: none; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+.stock-ok { color: #4f6b3a; }
+.stock-low { color: var(--brown); font-weight: 600; }
+.stock-out { color: var(--taupe); }
+.pcard-cta { margin-top: auto; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: .4rem .6rem; border: 1px solid var(--brown); color: var(--brown); font-size: .8125rem; letter-spacing: .03em; text-align: center; transition: background .2s, color .2s; }
+.pcard:hover .pcard-cta, .pcard:focus-within .pcard-cta { background: var(--brown); color: var(--cream); }
+.pcard.is-soldout .pcard-cta { border-color: var(--nude); color: var(--taupe); }
+.pcard.is-soldout:hover .pcard-cta, .pcard.is-soldout:focus-within .pcard-cta { background: var(--sand); color: var(--choc); }
+@media (min-width: 40rem) {
+  .pcard-body { padding: 1rem 1rem 1.1rem; }
+  .pcard-title { font-size: 1.1875rem; }
+  .pcard-head { min-height: 4.1rem; }
+  .pcard .price { min-height: 0; }
+  .pcard-cta { font-size: .875rem; letter-spacing: .06em; }
+}
+/* Uma única peça na coleção: card em destaque, centralizado (horizontal no desktop). */
+@media (min-width: 48rem) {
+  .grid.is-single { grid-template-columns: minmax(0, 46rem); }
+  .grid.is-single .pcard { flex-direction: row; }
+  .grid.is-single .pcard-media { flex: 0 0 46%; aspect-ratio: 4 / 5; }
+  .grid.is-single .pcard-body { justify-content: center; padding: 2rem 2.25rem; gap: .75rem; }
+  .grid.is-single .pcard-head { min-height: 0; }
+  .grid.is-single .pcard-title { font-size: 1.875rem; -webkit-line-clamp: 3; }
+  .grid.is-single .price { font-size: 1.125rem; }
+  .grid.is-single .pcard-opts { min-height: 0; font-size: .9375rem; }
+  .grid.is-single .pcard-cta { margin-top: 1rem; align-self: flex-start; min-width: 16rem; }
+}
 .price { margin: .2rem 0 0; font-size: .9375rem; }
 .price s { color: var(--taupe); margin-right: .5rem; }
 .price .now { color: var(--brown); font-weight: 600; }
@@ -115,7 +169,7 @@ h2 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); }
 .skeleton { display: grid; gap: 2rem 1rem; grid-template-columns: repeat(2, 1fr); }
 .skeleton div { aspect-ratio: 3 / 4; background: linear-gradient(90deg, var(--sand), var(--cream), var(--sand)); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
 @keyframes shimmer { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .skeleton div { animation: none; } .card img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .skeleton div { animation: none; } .pcard-media img, .pcard, .pcard-cta { transition: none; } }
 .notice { padding: .9rem 1rem; border: 1px solid var(--nude); background: var(--paper); margin: 0 0 1.25rem; font-size: .9375rem; }
 .notice.error { border-color: var(--danger); color: var(--danger); }
 .notice ul { margin: .4rem 0 0; padding-left: 1.2rem; }

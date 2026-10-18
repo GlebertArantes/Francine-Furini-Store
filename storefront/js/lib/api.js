@@ -39,7 +39,7 @@ export function createApi(config, fetchFn = fetch) {
     async getProducts() {
       const rows = await get(
         "products?select=id,category_id,name,slug,description,fabric,price_cents,compare_at_price_cents,featured,published_at," +
-          "product_variants(id,color,size,quantity),product_images(storage_path,alt_text,sort_order)" +
+          "product_variants(id,color,size,quantity,active),product_images(storage_path,alt_text,sort_order)" +
           "&order=featured.desc,published_at.desc.nullslast,name.asc"
       );
       return rows.map(normalizeProduct);
@@ -53,7 +53,7 @@ export function normalizeProduct(row) {
     description: row.description ?? "", fabric: row.fabric ?? "",
     price_cents: row.price_cents, compare_at_price_cents: row.compare_at_price_cents ?? null,
     featured: !!row.featured,
-    variants: (row.product_variants ?? []).map((v) => ({ id: v.id, color: v.color, size: v.size, quantity: v.quantity })),
+    variants: (row.product_variants ?? []).map((v) => ({ id: v.id, color: v.color, size: v.size, quantity: v.quantity, active: v.active !== false })),
     images: [...(row.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order),
   };
 }

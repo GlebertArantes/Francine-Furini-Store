@@ -61,7 +61,8 @@ test("variantIndex alimenta reconciliação com estoque atual", () => {
 test("api: normaliza produto, ordena imagens, monta URL pública do bucket e valida config", async () => {
   const n = normalizeProduct({ id: "p", name: "N", slug: "n", price_cents: 1, product_variants: [{ id: "v", color: "c", size: "s", quantity: 1, extra: "x" }], product_images: [{ storage_path: "b", sort_order: 2 }, { storage_path: "a", sort_order: 1 }] });
   assert.deepEqual(n.images.map((i) => i.storage_path), ["a", "b"]);
-  assert.deepEqual(n.variants, [{ id: "v", color: "c", size: "s", quantity: 1 }]);
+  assert.deepEqual(n.variants, [{ id: "v", color: "c", size: "s", quantity: 1, active: true }]);
+  assert.equal(normalizeProduct({ id: "p", name: "N", slug: "n", price_cents: 1, product_variants: [{ id: "v", color: "c", size: "s", quantity: 1, active: false }] }).variants[0].active, false);
   const cfg = resolveConfig({ supabaseUrl: "https://abc.supabase.co/", supabasePublishableKey: "sb_publishable_x" });
   assert.equal(cfg.createOrderUrl, "https://abc.supabase.co/functions/v1/create-order");
   assert.throws(() => resolveConfig({}), /config_missing/);
