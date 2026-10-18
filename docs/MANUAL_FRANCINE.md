@@ -15,10 +15,10 @@
 ## 1. Como entrar no painel
 
 1. Abra o endereço do painel no navegador do celular ou do computador.
-2. Digite o **usuário** e a **senha** que você recebeu e toque em **Entrar**.
+2. Digite o **login** e a **senha** que você recebeu e toque em **Entrar**.
 3. Para sair, toque em **Sair** (canto superior direito). Faça isso sempre que usar um aparelho que não é só seu.
 
-No topo ficam os atalhos: **Painel**, **Pedidos**, **Produtos**, **Categorias** e **Loja**.
+No topo ficam os atalhos: **Painel**, **Pedidos**, **Produtos** e **Categorias**.
 
 **Se aparecer “Sua sessão expirou”:** é normal depois de algum tempo parada. Entre de novo.
 **Se aparecer “Acesso negado”:** o usuário usado não tem permissão. Toque em **Sair** e fale com o suporte.
@@ -75,7 +75,7 @@ Depois de criar, o painel abre a tela do produto para cadastrar **cores, tamanho
 
 1. Toque em **Escolher fotos da galeria** e selecione **uma ou várias** fotos do celular.
 2. Cada foto aparece com uma **prévia**. Você pode:
-   - escrever o **texto alternativo** (opcional) — uma frase curta que descreve a foto, ex.: *“Vestido terra, frente”*;
+   - escrever o **texto alternativo** (opcional) — uma frase curta que descreve a foto, ex.: *“Vestido terra, frente”*. Em fotos já enviadas, toque em **Salvar texto** para gravar alterações;
    - tocar em **Remover da seleção** para tirar uma foto antes de enviar.
 3. **A primeira foto é a principal** (aparece na vitrine). A ordem em que você escolheu é a ordem das fotos.
 4. Ao tocar em **Criar produto**, as fotos são enviadas junto. Em produto já criado, toque em **Enviar fotos**.
@@ -111,7 +111,7 @@ Repita para cada cor e tamanho. A mesma combinação não pode ser cadastrada du
 <!-- pagebreak -->
 ## 6. Como informar (e ajustar) o estoque
 
-O estoque é o número em **Quantidade em estoque**, em cada variante.
+O estoque é o número em **Quantidade em estoque**, em cada variante. Na listagem, o total considera apenas as variantes ativas; uma variante desativada pode ter quantidade registrada sem entrar nesse total.
 
 - Para **atualizar**, mude o número e toque em **Salvar**.
 - **Estoque baixo** (2 ou menos) e **Esgotada** (0) aparecem como etiquetas.
@@ -153,7 +153,7 @@ O produto some da loja na hora (inclusive pelo link direto), mas **nada é apaga
    - **Cliente contatada** — você já falou com a cliente;
    - **Concluído** — venda fechada e estoque baixado;
    - **Cancelado**.
-3. Toque no pedido para abrir. Você vê: o **código** (ex.: FF-181026-001), os **dados e o endereço** da cliente, os **itens** (com nome, cor, tamanho e preço da hora), o **subtotal**, o **frete** e o **histórico**.
+3. Toque no pedido para abrir. Você vê: o **código** (ex.: FF-DDMMAA-001), os **dados e o endereço** da cliente, os **itens** (com nome, cor, tamanho e preço da hora), o **subtotal**, o **frete** e o **histórico**.
 
 > Os dados das clientes são pessoais. Use só para atender o pedido e **não compartilhe** prints.
 
@@ -247,7 +247,7 @@ O pedido fica **Cancelado** e o **estoque não muda** (porque ainda não tinha b
 **A foto não sobe.** Veja a mensagem: ela diz o arquivo e o motivo (sem internet, formato, tamanho). Corrija e envie de novo pela tela do produto.
 **O produto não aparece na loja.** Confira se **Ativo** está marcado e se há **variantes ativas com estoque**. Se agendou uma data em *Publicar em*, a loja só mostra depois dela.
 **Apareceu um pedido estranho/repetido.** Cancele o que for duplicado ou falso (capítulo 14) — não afeta o estoque.
-**Preciso mudar o WhatsApp ou o Instagram da loja.** Toque em **Loja**, altere e salve.
+**Preciso mudar o WhatsApp ou o Instagram da loja.** Peça à equipe responsável pelo suporte da loja para atualizar esses dados.
 
 ## Checklist para publicar um produto novo
 

@@ -40,7 +40,7 @@ admin/
     rules.js             validação/payload de produto, variante, categoria, loja; regras de upload e ordenação de fotos
     orders.js            ações de pedido SOMENTE via RPC + single-flight + mapeamento de erros
     ui.js, dom.js        toasts, modal de confirmação, guarda de duplo clique, DOM seguro
-  js/views/              login, dashboard, categories, products (lista/edição/variantes/fotos), orders (lista/detalhe), settings
+  js/views/              login, dashboard, categories, products (lista/edição/variantes/fotos), orders (lista/detalhe)
 ```
 
 ## Decisões
@@ -71,3 +71,9 @@ verificado com Chromium contra um mock do Supabase.
 - Fotos acima de 8 MB (JPEG/PNG/WebP) são reduzidas automaticamente no navegador (JPEG, lado maior 2400 px); AVIF/outros formatos não são recodificados.
 - Campos principais primeiro; slug/SKU/agendamento em “Mais opções”; variantes com rótulos visíveis e teclado numérico.
 - Manual para a cliente: `docs/MANUAL_FRANCINE.md`. Auditoria: `docs/AUDITORIA_V1.md`.
+
+## Configurações institucionais da loja
+
+A aba **Loja** não faz mais parte da navegação nem das rotas do painel da cliente. Os registros existentes de `store_settings` (**nome, Instagram, WhatsApp e anúncio**) permanecem íntegros no Supabase e continuam sendo lidos pela vitrine. A antiga rota `#/configuracoes` leva ao Painel.
+
+**Importante na entrega:** o WhatsApp ainda é o número de teste e deverá ser substituído pelo número oficial apenas depois da confirmação da Francine, por intervenção técnica autorizada. Não alterar a tabela nem embutir os valores no código neste ajuste. O formulário legado em `views/settings.js` foi preservado apenas no repositório, sem rota publicada, para possível reutilização futura.
