@@ -1,6 +1,6 @@
 # Auditoria final da V1 — qualidade, segurança e preparação de entrega
 
-Rodada de 18/10/2026. Escopo: checkout, banco/RLS, Edge Function, painel, mobile e vitrine. Nenhuma migration foi criada ou aplicada;
+Rodada de 18/10/2026. Escopo: checkout, banco/RLS, Edge Function, painel, mobile e vitrine. Nenhuma migration foi criada ou aplicada e nenhum deploy (Cloudflare ou Edge Function) foi feito;
 nada foi escrito em produção. Regras comerciais preservadas (frete e pagamento manuais; pedido **não** reserva nem baixa estoque;
 só **concluir a venda** baixa estoque, uma única vez; cancelar não baixa).
 
@@ -44,7 +44,7 @@ Não foram feitas consultas ao Supabase de produção nem alteradas configuraç�
 | S6 | Baixo | Limite por IP em memória por instância; `X-Forwarded-For` pode ser forjado se a função for acessada direto. | Aceito enquanto a barreira real é o limite por telefone no banco; resolvido junto com S1. |
 | S7 | Baixo | `style-src 'unsafe-inline'` (necessário por atributos `style` usados na interface). | Aceito; `script-src 'self'` e `object-src 'none'` seguem estritos. |
 | S8 | Baixo | `address_complement` sem limite de tamanho dentro do RPC (a Edge Function limita a 120). RPC é executável só por `service_role`. | Aceito; ajustar numa futura migration. |
-| S9 | Baixo | Corpo da requisição limitado por caracteres (não bytes) e lido antes de recusar; falha do banco gerava erro não tratado (sem CORS). | **Corrigido + Testado** (limite por bytes + `Content-Length`; 503/502 JSON controlado). |
+| S9 | Baixo | Corpo da requisição limitado por caracteres (não bytes) e lido antes de recusar; falha do banco gerava erro não tratado (sem CORS). | **Corrigido no código + Testado** (limite por bytes + `Content-Length`; 503/502 JSON controlado). **A Edge Function publicada só recebe isso no próximo deploy da função — não executado nesta rodada** (sem urgência: o comportamento atual é seguro, apenas menos amigável). |
 | S10 | Baixo | Links “Política/Termos” do checkout abriam em nova aba sem `rel=noopener`. | **Corrigido + Testado** (teste varre todo `target="_blank"`). |
 | S11 | Baixo | Sem `Strict-Transport-Security`. | **Corrigido** (HSTS `max-age=15552000`, sem `includeSubDomains`/`preload` por causa de `pages.dev`). Testado. |
 | S12 | Info | **Avisos “SECURITY DEFINER” do Supabase Advisor** — *não são vulnerabilidades comprovadas*, ver 2.1. | Classificado; teste de catálogo impede regressão. |
