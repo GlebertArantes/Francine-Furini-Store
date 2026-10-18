@@ -13,11 +13,12 @@ const read = (f) => fs.readFileSync(new URL(`../../${f}`, import.meta.url), "utf
 
 // ---- Como comprar --------------------------------------------------------------------------
 test("Como comprar: 4 passos do fluxo real, na ordem, e aviso explícito (sem pagamento / sem reserva de estoque)", () => {
-  assert.deepEqual(STEPS.map((s) => s[0]), ["Escolha suas peças", "Selecione tamanho e cor", "Envie sua solicitação", "Combine frete e pagamento"]);
+  assert.deepEqual(STEPS.map((s) => s[0]), ["Escolha suas peças", "Selecione tamanho e cor", "Registre sua solicitação", "Envie pelo WhatsApp"]);
   const root = howToBuySection();
   const text = textOf(root);
   for (const [t] of STEPS) assert.ok(text.includes(t));
-  assert.match(text, /A equipe entra em contato para combinar o frete e o pagamento/);
+  assert.match(text, /A Francine calcula o frete, combina o pagamento/);
+  assert.match(text, /toque em Enviar pedido pelo WhatsApp/i);
   assert.match(NOTICE, /não é confirmação de pagamento nem reserva de estoque/);
   assert.ok(text.includes(NOTICE));
   assert.equal(findAll(root, (e) => e.tag === "li").length, 4);

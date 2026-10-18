@@ -51,7 +51,8 @@ function boot() {
       return cart.reconcile(variantIndex(ctx.products, (p) => api.imageUrl(p.images[0]?.storage_path)));
     },
     setOrder(o) {
-      ctx.order = { display_code: o.display_code };
+      // Dados pessoais da mensagem ficam apenas em memória; sessão guarda só o código.
+      ctx.order = { display_code: o.display_code, whatsapp_message: o.whatsapp_message ?? null };
       try { sessionStorage.setItem(ORDER_KEY, ctx.order.display_code); } catch { /* ok */ }
     },
   };

@@ -1,6 +1,6 @@
 // Regras do checkout V1. Validação aqui é só conveniência: o servidor revalida tudo.
-import { normalizePhone, onlyDigits } from "./format.js";
-import { toOrderItems } from "./cart.js";
+import { formatBRL, formatCep, formatPhone, normalizePhone, onlyDigits } from "./format.js";
+import { subtotalCents, toOrderItems } from "./cart.js";
 
 const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
 export const UF_LIST = UFS;
@@ -110,12 +110,51 @@ export function createOrderPlacer({ cartStore, send }) {
   });
 }
 
-/** Link do WhatsApp: só o código do pedido — sem nome, endereço ou telefone da cliente. */
-export function whatsappUrl(number, displayCode) {
+/**
+ * Mensagem opcional para a cliente ENVIAR à loja, apenas após o servidor registrar o pedido.
+ * Os valores do carrinho são referências visuais; o pedido salvo no backend é a fonte oficial.
+ * Chamada pelo checkout com dados validados. Não salvar esta mensagem em localStorage/sessionStorage.
+ */
+export function whatsappOrderMessage(displayCode, customer, items = []) {
+  if (!displayCode || !customer || !Array.isArray(items) || !items.length) return null;
+  const clean = (v) => String(v ?? "").replace(/\s+/g, " ").trim();
+  const c = customer;
+  const lines = [
+    "🛍️ *SOLICITAÇÃO DE COMPRA — FRANCINE FURINI STORE*",
+    `*Pedido:* ${clean(displayCode)}`,
+    `*Cliente:* ${clean(c.name)}`,
+    `*WhatsApp:* ${formatPhone(c.phone)}`,
+    "",
+    "*PEÇAS ESCOLHIDAS*",
+  ];
+  for (const item of items) {
+    lines.push(`• ${item.quantity}× ${clean(item.ref?.name)}`);
+    lines.push(`  Cor: ${clean(item.ref?.color)} | Tamanho: ${clean(item.ref?.size)}`);
+    lines.push(`  Valor de referência: ${formatBRL(item.quantity * (item.ref?.price_cents || 0))}`);
+  }
+  lines.push("",
+    `*Subtotal de referência:* ${formatBRL(subtotalCents({ items }))}`,
+    "*Frete:* aguardando cálculo",
+    "*Pagamento:* ainda não realizado",
+    "",
+    "*ENDEREÇO DE ENTREGA*",
+    `${clean(c.address_line)}, ${clean(c.address_number)}${c.address_complement ? ` — ${clean(c.address_complement)}` : ""}`,
+    `${clean(c.neighborhood)} — ${clean(c.city)}/${clean(c.state)}`,
+    `CEP: ${formatCep(c.postal_code)}`);
+  if (c.note) lines.push(`*Observações:* ${clean(c.note)}`);
+  lines.push("", "Gostaria de confirmar o frete e combinar o pagamento. Aguardo seu retorno!");
+  return lines.join("\n");
+}
+
+/**
+ * Link do WhatsApp. Sem mensagem detalhada (ex.: página recarregada), leva SOMENTE o código
+ * do pedido para proteger dados pessoais de armazenamento persistente no navegador.
+ */
+export function whatsappUrl(number, displayCode, detailedMessage = null) {
   const n = onlyDigits(number);
   if (!n) return null;
-  const text = displayCode
+  const text = detailedMessage || (displayCode
     ? `Olá! Acabei de enviar o pedido ${displayCode} na Francine Furini Store.`
-    : "Olá! Gostaria de falar sobre a Francine Furini Store.";
+    : "Olá! Gostaria de falar sobre a Francine Furini Store.");
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
 }

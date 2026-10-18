@@ -1,7 +1,7 @@
 import { h, setChildren } from "../lib/dom.js";
 import { formatBRL, formatCep, formatPhone } from "../lib/format.js";
 import { subtotalCents } from "../lib/cart.js";
-import { validateCustomer, createOrderPlacer, postOrder, needsCartRefresh, errorMessage, UF_LIST } from "../lib/checkout.js";
+import { validateCustomer, createOrderPlacer, postOrder, needsCartRefresh, errorMessage, UF_LIST, whatsappOrderMessage } from "../lib/checkout.js";
 import { changesNotice } from "./cart.js";
 import { stateBlock, loadingGrid } from "./common.js";
 
@@ -28,7 +28,7 @@ export function checkoutView(ctx) {
       attrs.tag === "textarea" ? h("textarea", { id: `c-${name}`, name, maxlength: attrs.maxlength, rows: 3 }) :
       h("input", { id: `c-${name}`, name, type: "text", ...attrs }), h("p", { class: "err", id: `e-${name}`, role: "alert" }));
 
-    const submit = h("button", { type: "submit", class: "btn block" }, "Enviar pedido");
+    const submit = h("button", { type: "submit", class: "btn block" }, "Registrar pedido e continuar");
     const msg = h("div", { "aria-live": "polite" });
     if (banner) msg.append(banner);
     if (changes.length) msg.append(changesNotice(changes));
@@ -48,7 +48,7 @@ export function checkoutView(ctx) {
           h("select", { id: "c-state", name: "state", required: true, autocomplete: "address-level1" }, h("option", { value: "" }, "Selecione"), UF_LIST.map((u) => h("option", { value: u }, u))),
           h("p", { class: "err", id: "e-state", role: "alert" })),
         f("note", "Observação (opcional)", { tag: "textarea", maxlength: 500 })),
-      h("p", { class: "muted", style: "font-size:.875rem" }, "Ao enviar, a Francine calculará o frete e entrará em contato para fechar o pagamento manualmente. Nada é cobrado agora."),
+      h("p", { class: "muted", style: "font-size:.875rem" }, "Primeiro registramos o pedido. Na próxima tela, envie os detalhes à Francine pelo WhatsApp para que ela calcule o frete e combine o pagamento. Nada é cobrado agora."),
       h("p", { class: "legal-consent" }, "Os dados informados serão usados para atender esta solicitação. Ao continuar, você declara que leu a ",
         h("a", { href: "#/privacidade", target: "_blank", rel: "noopener noreferrer" }, "Política de Privacidade"), " e os ",
         h("a", { href: "#/termos", target: "_blank", rel: "noopener noreferrer" }, "Termos de Uso e Compra"), "."),
@@ -73,11 +73,20 @@ export function checkoutView(ctx) {
       const v = validateCustomer(raw);
       showErrors(v.errors);
       if (!v.ok) { form.querySelector('[aria-invalid="true"]')?.focus(); return; }
-      submit.disabled = true; submit.setAttribute("aria-busy", "true"); submit.textContent = "Enviando…";
+      submit.disabled = true; submit.setAttribute("aria-busy", "true"); submit.textContent = "Registrando…";
+      // O placer limpa o carrinho ao registrar o pedido. Guardamos apenas um retrato
+      // dos itens desta tentativa para compor a mensagem no WhatsApp depois do sucesso.
+      const itemsForWhatsApp = ctx.cart.get().items.map((i) => ({
+        quantity: i.quantity,
+        ref: { name: i.ref.name, color: i.ref.color, size: i.ref.size, price_cents: i.ref.price_cents },
+      }));
       const result = await place(raw);
       if (result.skipped) return;
       if (result.ok) {
-        ctx.setOrder(result.order);
+        ctx.setOrder({
+          ...result.order,
+          whatsapp_message: whatsappOrderMessage(result.order.display_code, v.value, itemsForWhatsApp),
+        });
         ctx.navigate("#/pedido");
         return;
       }
@@ -87,7 +96,7 @@ export function checkoutView(ctx) {
         draw(h("p", { class: "notice error", role: "alert" }, errorMessage(result.code)), raw);
         return;
       }
-      submit.disabled = false; submit.removeAttribute("aria-busy"); submit.textContent = "Enviar pedido";
+      submit.disabled = false; submit.removeAttribute("aria-busy"); submit.textContent = "Registrar pedido e continuar";
       msg.replaceChildren(h("p", { class: "notice error", role: "alert" }, result.message ?? "Confira os campos destacados.")); if (changes.length) msg.append(changesNotice(changes));
       msg.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });

@@ -3,8 +3,8 @@ import { h } from "../lib/dom.js";
 export const STEPS = [
   ["Escolha suas peças", "Navegue pela coleção e veja os detalhes de cada peça."],
   ["Selecione tamanho e cor", "Escolha a combinação disponível e adicione ao carrinho."],
-  ["Envie sua solicitação", "Informe seus dados de contato e de entrega e envie o pedido."],
-  ["Combine frete e pagamento", "A equipe entra em contato para combinar o frete e o pagamento diretamente com você."],
+  ["Registre sua solicitação", "Informe nome, WhatsApp e endereço de entrega. O pedido será registrado na loja."],
+  ["Envie pelo WhatsApp", "Após registrar, toque em Enviar pedido pelo WhatsApp. A Francine calcula o frete, combina o pagamento e conclui a venda manualmente."],
 ];
 
 export const NOTICE = "Importante: enviar a solicitação não é confirmação de pagamento nem reserva de estoque. A venda só é concluída depois que a loja confirmar o pagamento combinado com você.";

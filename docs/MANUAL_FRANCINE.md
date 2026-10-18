@@ -6,7 +6,8 @@
 **Endereço da loja:** https://francinefurinistore.com.br
 
 > **Como a loja funciona (resumo):** a cliente escolhe as peças e envia uma **solicitação de compra**. Ela **não paga no site**.
-> Você calcula o frete, combina o pagamento com a cliente (por WhatsApp) e, quando o pagamento estiver certo, **conclui a venda** no painel.
+> Depois de registrar o pedido, a cliente pode tocar em **Enviar pedido pelo WhatsApp**: a mensagem já vem com peças, contato e endereço. **Ela precisa apertar Enviar no WhatsApp** — não é aviso automático. Se não enviar, o pedido ainda fica no painel.
+> Você calcula o frete, combina o pagamento com a cliente (por WhatsApp, podendo criar manualmente o link no Mercado Pago) e, **só depois de confirmar o recebimento**, conclui a venda no painel.
 > É nesse momento — e só nele — que o estoque diminui.
 
 ---
@@ -155,6 +156,8 @@ O produto some da loja na hora (inclusive pelo link direto), mas **nada é apaga
    - **Cancelado**.
 3. Toque no pedido para abrir. Você vê: o **código** (ex.: FF-DDMMAA-001), os **dados e o endereço** da cliente, os **itens** (com nome, cor, tamanho e preço da hora), o **subtotal**, o **frete** e o **histórico**.
 
+**Importante:** pedidos enviados pelo site ficam aqui mesmo se a cliente fechar a página antes de tocar em **Enviar** no WhatsApp. Nesse caso, consulte o painel e entre em contato usando o número informado.
+
 > Os dados das clientes são pessoais. Use só para atender o pedido e **não compartilhe** prints.
 
 ---
@@ -178,7 +181,7 @@ O site **não calcula frete**. Você calcula fora (com o CEP e o endereço do pe
 ## 11. Como marcar contato com a cliente
 
 1. No pedido, toque em **Abrir WhatsApp** (abre a conversa com o número da cliente) ou em **Copiar WhatsApp**.
-2. Combine o frete, o pagamento e a entrega.
+2. Combine o frete, o pagamento e a entrega. Se usar Mercado Pago, **crie você mesma o link de pagamento na sua conta** e envie-o à cliente. A loja não gera nem confirma pagamentos do Mercado Pago automaticamente.
 3. Volte ao painel e toque em **Marcar como contatada**. Se quiser, escreva uma **observação interna** (só você vê).
 
 Isso apenas registra no histórico que você já falou com ela. Não altera estoque nem valores.
