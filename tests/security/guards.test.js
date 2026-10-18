@@ -93,3 +93,21 @@ test("domínio oficial e pages.dev previstos; admin segue em pages.dev", () => {
   assert.match(readme, /francine-furini-admin\.pages\.dev/);
   assert.match(read("docs/DOMINIO_E_CORS.md"), /ALLOWED_ORIGINS/);
 });
+
+test("XSS: nenhum sink perigoso de HTML/código no storefront e no admin (DOM só via textContent/h())", () => {
+  const files = tracked.filter((f) => /^(storefront|admin)\/js\/.*\.js$/.test(f));
+  assert.ok(files.length > 20);
+  const sinks = /\.innerHTML\b|\.outerHTML\b|insertAdjacentHTML|document\.write\(|\beval\(|new Function\(|setAttribute\(\s*["'`]on|\bsrcdoc\b|javascript:/;
+  for (const f of files) {
+    const code = read(f).split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+    assert.ok(!sinks.test(code), `${f}: sink perigoso`);
+  }
+  // links externos montados com dados vindos do banco só aceitam https/wa.me e abrem com noopener
+  for (const f of files) {
+    const text = read(f);
+    for (const m of text.matchAll(/target:\s*"_blank"/g)) {
+      const around = text.slice(Math.max(0, m.index - 200), m.index + 200);
+      assert.match(around, /rel:\s*"noopener noreferrer"/, `${f}: target=_blank sem rel=noopener`);
+    }
+  }
+});

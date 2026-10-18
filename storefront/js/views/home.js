@@ -1,6 +1,7 @@
 import { h } from "../lib/dom.js";
 import { filterProducts, facets, featuredProducts } from "../lib/catalog.js";
 import { productCard, loadingGrid, stateBlock } from "./common.js";
+import { howToBuySection } from "./how-to-buy.js";
 
 export function homeView(ctx, query) {
   const root = h("div", {});
@@ -75,6 +76,7 @@ export function homeView(ctx, query) {
       body.append(h("ul", { class: "grid" }, list.map((p) => productCard(ctx, p))));
     }
     parts.push(body);
+    if (!filtered) parts.push(h("div", { class: "wrap" }, howToBuySection()));
     root.replaceChildren(...parts);
   }
   return root;

@@ -52,7 +52,7 @@ export const ERROR_MESSAGES = {
   invalid_customer: "Confira seus dados de contato e endereço.",
   invalid_request: "Não foi possível processar o pedido. Confira os dados e tente novamente.",
   payload_too_large: "Os dados enviados ficaram grandes demais. Reduza a observação e tente de novo.",
-  network: "Não conseguimos conectar. Verifique sua internet e tente novamente.",
+  network: "Não conseguimos conectar. Verifique sua internet e tente novamente. Se tiver dúvida se o pedido chegou a ser enviado, fale com a Francine pelo WhatsApp antes de reenviar, para evitar pedido duplicado.",
   generic: "Não foi possível enviar seu pedido agora. Tente novamente em instantes ou fale com a Francine pelo WhatsApp.",
 };
 

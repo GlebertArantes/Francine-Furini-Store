@@ -8,6 +8,8 @@ import { productView } from "./views/product.js";
 import { cartView } from "./views/cart.js";
 import { checkoutView } from "./views/checkout.js";
 import { successView } from "./views/success.js";
+import { howToBuyView } from "./views/how-to-buy.js";
+import { wordmarkContent, wordmarkClass } from "./lib/brand.js";
 import { legalView } from "./views/legal.js";
 
 const appEl = document.getElementById("app");
@@ -73,6 +75,7 @@ function boot() {
     else if (parts[0] === "carrinho") view = cartView(ctx);
     else if (parts[0] === "checkout") view = checkoutView(ctx);
     else if (parts[0] === "pedido") view = successView(ctx);
+    else if (parts[0] === "como-comprar") { document.title = `Como comprar — ${storeName}`; view = howToBuyView(); }
     else if (parts[0] === "privacidade") { document.title = `Política de Privacidade — ${storeName}`; view = legalView(ctx, "privacidade"); }
     else if (parts[0] === "termos") { document.title = `Termos de Uso e Compra — ${storeName}`; view = legalView(ctx, "termos"); }
     else view = homeView(ctx, query);
@@ -89,7 +92,7 @@ function buildShell(ctx) {
   const count = h("span", { class: "cart-count", "data-n": "0", "aria-hidden": "true" }, "0");
   const countSr = h("span", { class: "sr-only" }, "Carrinho vazio");
   const input = h("input", { type: "search", name: "q", id: "q", placeholder: "Buscar peças", autocomplete: "off", enterkeyhint: "search", "aria-label": "Buscar peças" });
-  const wordmark = h("a", { class: "wordmark", href: "#/", "aria-label": "Francine Furini Store — início" }, "Francine Furini", h("small", {}, "Store"));
+  const wordmark = h("a", { class: wordmarkClass(), href: "#/", "aria-label": "Francine Furini Store — início" }, ...wordmarkContent(h));
   const announce = h("div", { class: "announce hidden", role: "region", "aria-label": "Aviso" });
   const header = h("header", { class: "site-header" }, announce,
     h("div", { class: "wrap header-row" }, wordmark,
@@ -120,6 +123,7 @@ function buildShell(ctx) {
       setChildren(footerLinks,
         s.instagram_url && /^https:\/\//.test(s.instagram_url) ? h("li", {}, h("a", { href: s.instagram_url, target: "_blank", rel: "noopener noreferrer" }, "Instagram")) : null,
         s.whatsapp_number ? h("li", {}, h("a", { href: `https://wa.me/${String(s.whatsapp_number).replace(/\D/g, "")}`, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp")) : null,
+        h("li", {}, h("a", { href: "#/como-comprar" }, "Como comprar")),
         h("li", {}, h("a", { href: "#/privacidade" }, "Privacidade")),
         h("li", {}, h("a", { href: "#/termos" }, "Termos")));
     },
