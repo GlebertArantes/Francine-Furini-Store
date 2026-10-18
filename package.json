@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.ts tests/storefront/*.test.js tests/admin/*.test.js",
+    "test": "node --import ./tests/helpers/no-network.mjs --test tests/*.test.ts tests/storefront/*.test.js tests/admin/*.test.js tests/security/*.test.js",
     "test:sql": "bash tests/sql/run.sh",
     "test:all": "npm test && npm run test:sql",
     "storefront:config": "node scripts/storefront-config.mjs",
