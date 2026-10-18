@@ -52,23 +52,32 @@ export function createHandler(d: Deps) {
     const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
     if (!d.rateLimit(ip)) return json(429, { error: "rate_limited" }, { "retry-after": "60" });
 
+    // Limite em BYTES (não em caracteres) e recusa antecipada pelo Content-Length, antes de ler o corpo.
+    const declared = Number(req.headers.get("content-length") ?? "0");
+    if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return json(413, { error: "payload_too_large" });
     const raw = await req.text();
-    if (raw.length > MAX_BODY_BYTES) return json(413, { error: "payload_too_large" });
+    if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) return json(413, { error: "payload_too_large" });
     let body: unknown;
     try { body = JSON.parse(raw); } catch { return json(400, { error: "invalid_json" }); }
 
     const v = validateOrderInput(body);
     if (!v.ok) return json(400, { error: v.error });
 
-    const res = await d.fetch(`${d.supabaseUrl}/rest/v1/rpc/create_order_request`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        apikey: d.serviceRoleKey,
-        authorization: `Bearer ${d.serviceRoleKey}`,
-      },
-      body: JSON.stringify({ p_customer: v.value.customer, p_items: v.value.items }),
-    });
+    // Falha de rede/indisponibilidade do banco: resposta JSON controlada (com CORS), sem detalhes internos.
+    let res: Response;
+    try {
+      res = await d.fetch(`${d.supabaseUrl}/rest/v1/rpc/create_order_request`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: d.serviceRoleKey,
+          authorization: `Bearer ${d.serviceRoleKey}`,
+        },
+        body: JSON.stringify({ p_customer: v.value.customer, p_items: v.value.items }),
+      });
+    } catch {
+      return json(503, { error: "unavailable" });
+    }
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({} as Record<string, string>));
@@ -77,7 +86,8 @@ export function createHandler(d: Deps) {
       if (String(err.message ?? "").startsWith("invalid_")) return json(400, { error: "invalid_request" });
       return json(500, { error: "internal_error" });
     }
-    const out = await res.json();
+    const out = await res.json().catch(() => null);
+    if (!out?.order_id || !out?.display_code) return json(502, { error: "unavailable" });
     // Resposta mínima: sem PII, sem dados internos.
     return json(201, { order_id: out.order_id, display_code: out.display_code, status: out.status });
   };

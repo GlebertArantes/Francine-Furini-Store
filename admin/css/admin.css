@@ -117,3 +117,45 @@ dialog.confirm { border: 1px solid var(--nude); background: var(--paper); color:
 dialog.confirm::backdrop { background: rgba(58,42,32,.45); }
 dialog.confirm .actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.25rem; }
 @media (prefers-reduced-motion: no-preference) { .toast { animation: up .2s ease-out; } @keyframes up { from { transform: translateY(8px); opacity: 0; } } }
+
+/* ---- Cadastro de produto no celular ------------------------------------------------------ */
+.vis { padding: .75rem 1rem; border: 1px solid var(--nude); background: var(--paper); margin: 0 0 1rem; font-size: .9375rem; }
+.vis-hidden { border-color: var(--warn); color: var(--warn); background: #fbf3e4; }
+.vis-visible { border-color: var(--ok); color: var(--ok); background: #eef4e8; }
+.vis-scheduled { border-color: var(--taupe); }
+.vis strong { font-weight: 700; }
+details.more { margin: 0 0 1.25rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+details.more summary { cursor: pointer; padding: .85rem 0; min-height: 44px; color: var(--brown); display: flex; align-items: center; }
+details.more[open] summary { margin-bottom: .5rem; }
+.subpanel { border: 1px dashed var(--nude); padding: 1rem; margin: 0 0 1.25rem; background: var(--cream); }
+.subpanel h2 { font-size: 1.2rem; }
+.file-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
+.file-input:focus-visible + label { outline: 2px solid var(--brown); outline-offset: 2px; }
+.photo-picker { display: grid; gap: .5rem; justify-items: start; }
+.photo-picker .btn { width: 100%; }
+@media (min-width: 40rem) { .photo-picker .btn { width: auto; } }
+
+/* Variantes: campos com rótulo visível (no celular, quantidade e tamanho sempre identificados) */
+.variant-form { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; align-items: end; }
+.variant-form .mini { display: grid; gap: .25rem; margin: 0; }
+.variant-form .mini span { font-size: .6875rem; letter-spacing: .1em; text-transform: uppercase; color: var(--brown); }
+.variant-form .vstate, .variant-form .vactions, .variant-form .err { grid-column: 1 / -1; }
+.variant-form .vstate { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.variant-form .vactions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.variant-form .vactions .btn { flex: 1 1 8rem; }
+@media (min-width: 56rem) {
+  .variant-form { grid-template-columns: 1.2fr 1.2fr 8rem 1fr; }
+  .variant-form .vstate { grid-column: 1 / 3; }
+  .variant-form .vactions { grid-column: 3 / -1; justify-content: flex-end; }
+  .variant-form .vactions .btn { flex: 0 0 auto; }
+}
+
+/* Alvos de toque confortáveis (>= 44px) em telas de toque/estreitas */
+@media (pointer: coarse), (max-width: 56rem) {
+  .btn.small { min-height: 44px; padding: .5rem 1rem; }
+  .link-btn { min-height: 44px; padding: .5rem .75rem; }
+  .crumbs a { display: inline-block; padding: .65rem .25rem; }
+  .brand { min-height: 44px; display: inline-flex; flex-direction: column; justify-content: center; }
+  .bar .link-btn { padding-inline: .75rem; }
+  .stepper button { width: 48px; height: 48px; }
+}

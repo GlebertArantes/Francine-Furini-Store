@@ -55,3 +55,9 @@ storefront/
 - A CSP (`_headers`) usa `'self'` e não cita o host da loja: trocar/adicionar domínio **não exige** alterar a CSP.
 - Checkout em um domínio novo exige incluí-lo em `ALLOWED_ORIGINS` da Edge Function (`docs/DOMINIO_E_CORS.md`).
 - Sem `og:image` até a marca oficial estar disponível.
+
+## Marca, “Como comprar” e acessibilidade
+
+- Paleta: marrom-terroso `#734335` e bege `#D2C3AE` (tokens em `css/styles.css`); contraste AA verificado por teste.
+- Seção “Como comprar” (`js/views/how-to-buy.js`) na home e em `#/como-comprar`, com o aviso de que a solicitação não é pagamento nem reserva de estoque.
+- Logo oficial: aguardando o arquivo original. Estrutura pronta em `js/lib/brand.js` e `assets/brand/README.md` (nenhuma logo improvisada, sem `og:image`).

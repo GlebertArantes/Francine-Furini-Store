@@ -63,3 +63,11 @@ admin/
 
 `npm test` → `tests/admin/` (auth/não-admin/sessão, login por usuário, config, dinheiro, payloads, upload, ciclo de pedidos). O fluxo no navegador foi
 verificado com Chromium contra um mock do Supabase.
+
+## Cadastro de produto (celular) — comportamento atual
+
+- **Produto novo nasce oculto (rascunho)**; caixa “Oculto da loja / Visível na loja / Agendado”. Publicar (novo ativo ou rascunho → ativo) pede confirmação com avisos (sem fotos / sem estoque).
+- Fotos dentro do formulário (acima de “Criar produto”), botão “Escolher fotos da galeria”, progresso e erros por arquivo em português.
+- Fotos acima de 8 MB (JPEG/PNG/WebP) são reduzidas automaticamente no navegador (JPEG, lado maior 2400 px); AVIF/outros formatos não são recodificados.
+- Campos principais primeiro; slug/SKU/agendamento em “Mais opções”; variantes com rótulos visíveis e teclado numérico.
+- Manual para a cliente: `docs/MANUAL_FRANCINE.md`. Auditoria: `docs/AUDITORIA_V1.md`.

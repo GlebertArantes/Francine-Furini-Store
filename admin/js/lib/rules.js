@@ -124,3 +124,24 @@ export function isoToLocalInput(iso) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+
+// --- publicação segura ---------------------------------------------------------------------
+/** Produto novo nasce OCULTO (rascunho): publicar é uma decisão explícita. */
+export const NEW_PRODUCT_DEFAULTS = Object.freeze({ active: false, featured: false });
+
+/** Estado de visibilidade na loja, em linguagem simples (a loja decide pela policy: ativo + published_at). */
+export function visibilityInfo({ active, published_at } = {}, now = Date.now()) {
+  if (!active) return { state: "hidden", label: "Oculto da loja (rascunho)", detail: "Este produto NÃO aparece para as clientes. Marque “Ativo” quando estiver pronto." };
+  const when = published_at ? new Date(published_at).getTime() : null;
+  if (when && when > now) return { state: "scheduled", label: "Agendado", detail: `Ficará visível na loja a partir de ${new Date(when).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}.` };
+  return { state: "visible", label: "Visível na loja", detail: "As clientes já podem ver e comprar este produto." };
+}
+
+/** Avisos antes de publicar: sem fotos / sem estoque disponível. */
+export function publishWarnings({ photos = 0, variants = null } = {}) {
+  const w = [];
+  if (!(photos > 0)) w.push("O produto ainda não tem fotos.");
+  if (variants === null) w.push("Cores, tamanhos e estoque ainda não foram cadastrados: o produto aparecerá como esgotado até você cadastrá-los.");
+  else if (!variants.some((v) => v.active && v.quantity > 0)) w.push("Nenhuma variante ativa com estoque: o produto aparecerá como esgotado.");
+  return w;
+}
