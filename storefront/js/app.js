@@ -9,7 +9,8 @@ import { cartView } from "./views/cart.js";
 import { checkoutView } from "./views/checkout.js";
 import { successView } from "./views/success.js";
 import { howToBuyView } from "./views/how-to-buy.js";
-import { wordmarkContent, wordmarkClass } from "./lib/brand.js";
+import { BRAND, wordmarkContent, wordmarkClass } from "./lib/brand.js";
+import { icon } from "./lib/icons.js";
 import { legalView } from "./views/legal.js";
 
 const appEl = document.getElementById("app");
@@ -103,7 +104,8 @@ function buildShell(ctx) {
   const footerLinks = h("ul", { class: "legal-links" });
   const footerName = h("strong", {});
   const footer = h("footer", { class: "site-footer" }, h("div", { class: "wrap" },
-    h("div", { class: "cols" }, h("div", {}, footerName, h("p", { style: "margin:.25rem 0 0" }, "Moda feminina com atendimento próximo.")), footerLinks),
+    h("div", { class: "cols" }, h("div", { class: "foot-brand" }, h("img", { class: "foot-mark", src: BRAND.logo.src, alt: "", width: 40, height: 40, loading: "lazy", decoding: "async" }),
+      h("div", {}, footerName, h("p", { style: "margin:.25rem 0 0" }, "Moda feminina com atendimento próximo."))), footerLinks),
     h("small", {}, "Frete e pagamento combinados diretamente com a Francine.")));
   footerName.textContent = name();
 
@@ -121,8 +123,8 @@ function buildShell(ctx) {
       announce.textContent = s.announcement_text || "";
       announce.classList.toggle("hidden", !s.announcement_text);
       setChildren(footerLinks,
-        s.instagram_url && /^https:\/\//.test(s.instagram_url) ? h("li", {}, h("a", { href: s.instagram_url, target: "_blank", rel: "noopener noreferrer" }, "Instagram")) : null,
-        s.whatsapp_number ? h("li", {}, h("a", { href: `https://wa.me/${String(s.whatsapp_number).replace(/\D/g, "")}`, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp")) : null,
+        s.instagram_url && /^https:\/\//.test(s.instagram_url) ? h("li", {}, h("a", { href: s.instagram_url, target: "_blank", rel: "noopener noreferrer" }, icon("instagram"), "Instagram")) : null,
+        s.whatsapp_number ? h("li", {}, h("a", { href: `https://wa.me/${String(s.whatsapp_number).replace(/\D/g, "")}`, target: "_blank", rel: "noopener noreferrer" }, icon("whatsapp"), "WhatsApp")) : null,
         h("li", {}, h("a", { href: "#/como-comprar" }, "Como comprar")),
         h("li", {}, h("a", { href: "#/privacidade" }, "Privacidade")),
         h("li", {}, h("a", { href: "#/termos" }, "Termos")));

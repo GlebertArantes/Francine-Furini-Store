@@ -27,12 +27,13 @@ test("og:url é igual ao canonical e é absoluto https (sem hash/rota)", () => {
   assert.equal(url, canonical);
 });
 
-test("metatags de compartilhamento continuam presentes; sem imagem social improvisada", () => {
+test("metatags de compartilhamento presentes, com og:image absoluta da marca oficial", () => {
   const html = read("storefront/index.html");
   for (const p of ["og:type", "og:title", "og:description", "og:site_name", "og:locale"]) assert.match(html, new RegExp(`property="${p}"`));
   assert.match(html, /name="description"/);
-  assert.match(html, /name="twitter:card" content="summary"/); // sem og:image até existir a marca oficial
-  assert.ok(!/og:image|twitter:image/.test(html), "og:image só após a marca oficial");
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /property="og:image" content="https:\/\/francinefurinistore\.com\.br\/assets\/brand\/og-image\.v1\.jpg"/);
+  assert.ok(fs.existsSync(path.join(root, "storefront/assets/brand/og-image.v1.jpg")), "arquivo og:image publicado com a loja");
 });
 
 test("roteamento por hash preservado: nenhuma <base>, nenhum redirecionamento próprio e rotas '#/'", () => {

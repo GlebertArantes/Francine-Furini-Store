@@ -248,14 +248,28 @@ body { overflow-x: hidden; }
 .how-note { margin: 0; padding: 1rem 1.1rem; background: var(--paper); border: 1px solid var(--nude); border-left: 3px solid var(--brown); font-size: .9375rem; }
 @media (min-width: 48rem) { .steps { grid-template-columns: repeat(2, 1fr); gap: 1.75rem 2.5rem; } }
 
-/* ---- Espaço para a logo oficial (ver assets/brand/README.md) ------------------------------ */
-.wordmark.has-logo { display: inline-flex; align-items: center; text-transform: none; letter-spacing: 0; }
-.brand-logo { display: block; height: 2.25rem; width: auto; max-width: 11rem; }
-@media (min-width: 48rem) { .brand-logo { height: 2.75rem; max-width: 14rem; } }
+/* ---- Logo oficial: monograma em "selo" bege (JPEG com fundo chapado #B09D7F, usado sem remover fundo) ---- */
+.wordmark.has-logo { display: inline-flex; align-items: center; gap: .65rem; }
+.brand-logo { display: block; flex: none; height: 2.5rem; width: 2.5rem; border-radius: 2px; background: #b09d7f; }
+@media (min-width: 48rem) { .brand-logo { height: 2.75rem; width: 2.75rem; } }
+@media (max-width: 22.5rem) { .wordmark.has-logo { gap: .5rem; } .brand-logo { height: 2.25rem; width: 2.25rem; } }
 
 /* ---- Alvos de toque confortáveis (>= 44px) em links soltos --------------------------------- */
 .wordmark, .site-footer a, .crumbs a, .summary > p > a, .summary > a, .legal-links a { display: inline-flex; align-items: center; min-height: 44px; }
 .wordmark { flex-direction: column; align-items: flex-start; justify-content: center; }
 .wordmark.has-logo { flex-direction: row; }
+.wordmark-text { display: flex; flex-direction: column; }
 .crumbs a { padding-inline: .4rem; margin-inline: -.4rem; }
 .summary > a { margin-top: .5rem; }
+
+/* ---- Rodapé: monograma sutil e ícones de contato ---- */
+.foot-brand { display: flex; align-items: flex-start; gap: .85rem; }
+.foot-mark { flex: none; width: 2.5rem; height: 2.5rem; border-radius: 2px; background: #b09d7f; }
+.site-footer .legal-links a { gap: .4rem; }
+.site-footer .ico { flex: none; width: 1.125rem; height: 1.125rem; color: var(--brown); }
+
+/* Cabeçalho com selo: texto menor em telas estreitas/médias para caber ao lado de busca e carrinho sem overflow. */
+.wordmark.has-logo { font-size: 1.05rem; letter-spacing: .04em; }
+.header-row .search { min-width: 0; }
+@media (min-width: 48rem) { .header-row { gap: 1.25rem; } .wordmark.has-logo { font-size: 1.15rem; } }
+@media (min-width: 64rem) { .header-row { gap: 2rem; } .wordmark.has-logo { font-size: 1.3rem; letter-spacing: .06em; } }

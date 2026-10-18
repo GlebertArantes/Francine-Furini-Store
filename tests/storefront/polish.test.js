@@ -39,12 +39,21 @@ test("home mostra Como comprar sem filtros; há rota própria e link no rodapé"
 });
 
 // ---- Logo: estrutura pronta, sem marca improvisada ------------------------------------------
-test("cabeçalho: sem logo oficial usa o wordmark tipográfico atual (nada improvisado)", () => {
-  assert.equal(BRAND.logo, null);
-  assert.equal(wordmarkClass(), "wordmark");
-  const el = h("a", {}, ...wordmarkContent(h));
+test("cabeçalho: sem logo configurada usa o wordmark tipográfico", () => {
+  const brand = { name: "Francine Furini Store", logo: null };
+  assert.equal(wordmarkClass(brand), "wordmark");
+  const el = h("a", {}, ...wordmarkContent(h, brand));
   assert.equal(textOf(el), "Francine FuriniStore");
   assert.equal(findAll(el, (e) => e.tag === "img").length, 0);
+});
+
+test("cabeçalho: monograma oficial + nome em texto visível (img decorativa, sem duplicar leitura)", () => {
+  assert.equal(wordmarkClass(), "wordmark has-logo");
+  const el = h("a", {}, ...wordmarkContent(h));
+  const img = findAll(el, (e) => e.tag === "img")[0];
+  assert.match(img.getAttribute("src"), /^\.\/assets\/brand\/logo-mark\.v1\.webp$/);
+  assert.equal(img.getAttribute("alt"), "");
+  assert.equal(textOf(el), "Francine FuriniStore");
 });
 
 test("cabeçalho: com a logo oficial exibe <img> responsiva e mantém o nome acessível", () => {
@@ -59,13 +68,20 @@ test("cabeçalho: com a logo oficial exibe <img> responsiva e mantém o nome ace
   assert.equal(textOf(byClass(el, "sr-only")[0]), "Francine Furini Store");
 });
 
-test("marca: nenhuma logo/og:image improvisada foi criada; pasta de marca só tem instruções", () => {
-  assert.deepEqual(fs.readdirSync(new URL("../../storefront/assets/brand/", import.meta.url)), ["README.md"]);
+test("marca: assets oficiais versionados existem e a arte é raster (sem afirmar SVG/transparência)", () => {
+  const dir = fs.readdirSync(new URL("../../storefront/assets/brand/", import.meta.url));
+  for (const f of ["logo-mark.v1.webp", "favicon-32.v1.png", "favicon-16.v1.png", "apple-touch-icon.v1.png", "og-image.v1.jpg", "README.md"]) assert.ok(dir.includes(f), f);
+  assert.match(read("storefront/assets/brand/README.md"), /raster|JPEG/i);
   const html = read("storefront/index.html");
-  assert.ok(!/og:image|twitter:image/.test(html));
-  assert.match(read("storefront/assets/brand/README.md"), /Não usar.* foto de perfil/s);
+  assert.match(html, /property="og:image" content="https:\/\/francinefurinistore\.com\.br\/assets\/brand\/og-image\.v1\.jpg"/);
+  assert.match(html, /og:image:width" content="1200"/);
+  assert.match(html, /twitter:image" content="https:\/\/francinefurinistore\.com\.br\//);
+  assert.match(html, /rel="canonical" href="https:\/\/francinefurinistore\.com\.br\/"/);
+  assert.match(html, /rel="icon"[^>]*favicon-32\.v1\.png/);
+  assert.match(html, /rel="apple-touch-icon"[^>]*apple-touch-icon\.v1\.png/);
+  assert.ok(!/data:image\/svg\+xml/.test(html), "sem favicon 'FF' improvisado");
   const css = read("storefront/css/styles.css");
-  assert.match(css, /\.brand-logo \{[^}]*height: 2\.25rem/);
+  assert.match(css, /\.brand-logo \{[^}]*height: 2\.5rem/);
   assert.match(css, /--nude: #d2c3ae/i);   // bege da marca
   assert.match(css, /--brown: #734335/i);  // marrom-terroso da marca
 });

@@ -1,19 +1,19 @@
-// Marca da loja. Enquanto a logo oficial não existe, o cabeçalho usa o wordmark tipográfico.
-// Para receber a logo: defina `logo` abaixo (ver storefront/assets/brand/README.md). Nada mais muda.
+// Marca da loja (fonte única da logo). O monograma oficial é um JPEG com fundo chapado (#B09D7F): é usado como
+// "selo" quadrado, sem remover fundo, ao lado do nome em texto. Se vier SVG/PNG transparente, basta trocar `src`.
 export const BRAND = Object.freeze({
   name: "Francine Furini Store",
-  logo: null, // ex.: { src: "./assets/brand/logo.svg", width: 160, height: 48 }
+  logo: Object.freeze({ src: "./assets/brand/logo-mark.v1.webp", width: 192, height: 192, showName: true }),
 });
 
 /** Conteúdo do link da marca (cabeçalho). `h` é o construtor de DOM seguro. */
 export function wordmarkContent(h, brand = BRAND) {
+  const text = ["Francine Furini", h("small", {}, "Store")];
   if (brand.logo?.src) {
-    return [
-      h("img", { class: "brand-logo", src: brand.logo.src, alt: "", width: brand.logo.width, height: brand.logo.height, decoding: "async" }),
-      h("span", { class: "sr-only" }, brand.name), // o nome continua disponível para leitores de tela
-    ];
+    const img = h("img", { class: "brand-logo", src: brand.logo.src, alt: "", width: brand.logo.width, height: brand.logo.height, decoding: "async" });
+    if (brand.logo.showName) return [img, h("span", { class: "wordmark-text" }, ...text)];
+    return [img, h("span", { class: "sr-only" }, brand.name)]; // só a logo: o nome continua disponível para leitores de tela
   }
-  return ["Francine Furini", h("small", {}, "Store")];
+  return text;
 }
 
 export const wordmarkClass = (brand = BRAND) => `wordmark${brand.logo?.src ? " has-logo" : ""}`;

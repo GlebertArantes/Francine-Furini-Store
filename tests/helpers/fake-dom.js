@@ -19,7 +19,7 @@ const coerce = (a) => (a instanceof Node ? a : new Text(a)); // null -> "null", 
 
 export function installFakeDom() {
   globalThis.Node = Node;
-  globalThis.document = { title: "", createElement: (t) => new Element(t), createTextNode: (d) => new Text(d), getElementById: () => null };
+  globalThis.document = { title: "", createElement: (t) => new Element(t), createElementNS: (_ns, t) => new Element(t), createTextNode: (d) => new Text(d), getElementById: () => null };
 }
 export const textOf = (n) => (n instanceof Text ? n.data : n.children.map(textOf).join(""));
 export function findAll(n, pred, out = []) {
