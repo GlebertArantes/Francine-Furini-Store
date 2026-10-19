@@ -77,3 +77,8 @@ verificado com Chromium contra um mock do Supabase.
 A aba **Loja** não faz mais parte da navegação nem das rotas do painel da cliente. Os registros existentes de `store_settings` (**nome, Instagram, WhatsApp e anúncio**) permanecem íntegros no Supabase e continuam sendo lidos pela vitrine. A antiga rota `#/configuracoes` leva ao Painel.
 
 **Importante na entrega:** o WhatsApp ainda é o número de teste e deverá ser substituído pelo número oficial apenas depois da confirmação da Francine, por intervenção técnica autorizada. Não alterar a tabela nem embutir os valores no código neste ajuste. O formulário legado em `views/settings.js` foi preservado apenas no repositório, sem rota publicada, para possível reutilização futura.
+
+
+## Marca, usuário e prévia
+- Logo oficial copiada para `assets/brand/` (deploy independente); exibida no login e no cabeçalho. O cabeçalho mostra o login amigável (`lib/identity.js`), nunca o e-mail completo.
+- **Prévia na vitrine** no cadastro/edição de produto (`views/product-preview.js`, `lib/preview-model.js`): somente leitura, atualiza ao digitar. Regras da vitrine em `lib/shared/` (cópia verificada por teste; rode `node scripts/sync-admin-shared.mjs` ao alterar `storefront/js/lib/{catalog,card,format}.js`). Veja `docs/PADRAO_ADMIN_MARCA.md`.

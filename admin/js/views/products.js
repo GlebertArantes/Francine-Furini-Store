@@ -3,6 +3,7 @@ import { formatBRL, centsToInput } from "../lib/money.js";
 import { validateProduct, validateVariant, slugify, stockLevel, reorderImages, isoToLocalInput, NEW_PRODUCT_DEFAULTS, visibilityInfo, publishWarnings } from "../lib/rules.js";
 import { shouldShrink, shrinkImage } from "../lib/image-resize.js";
 import { loadInto, guard, toast, field, showFieldErrors, confirmDialog, stateBox } from "../lib/ui.js";
+import { createPreviewPanel } from "./product-preview.js";
 import { createPhotoQueue, uploadPhotos, createProductWithPhotos, summarizeUpload } from "../lib/photos.js";
 
 // ---------------------------------------------------------------- lista
@@ -41,18 +42,36 @@ export function productEditView(ctx, id) {
   const root = h("div", { class: "page" });
   const isNew = id === "novo";
   // Em "novo", as fotos ficam só na memória do navegador até o produto existir (o picker sobrevive aos redraws).
-  const newPhotos = isNew ? photoPicker() : null;
+  let refreshPreview = null;
+  const newPhotos = isNew ? photoPicker({ onChange: () => refreshPreview?.() }) : null;
+  window.addEventListener("hashchange", () => newPhotos?.reset(), { once: true }); // libera as URLs locais ao sair da tela
   const draw = () => loadInto(ctx, root,
     async () => ({ categories: await ctx.api.listCategories(), product: isNew ? null : await ctx.api.getProduct(id) }),
     ({ categories, product }) => {
       if (!isNew && !product) { root.replaceChildren(stateBox("Produto não encontrado", "", h("a", { class: "btn secondary", href: "#/produtos" }, "Voltar"))); return; }
+      const form = productForm(ctx, categories, product, draw, newPhotos);
+      const panel = createPreviewPanel();
+      const images = () => (isNew
+        ? newPhotos.previewImages()
+        : [...(product.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((im) => ({ url: ctx.api.previewUrl(im.storage_path), alt: im.alt_text ?? "" })));
+      refreshPreview = () => panel.update({ values: form.readValues(), existing: product, images: images(), categories });
+      form.addEventListener("input", refreshPreview); form.addEventListener("change", refreshPreview);
+      refreshPreview();
+      const split = h("div", { class: "edit-split", "data-view": "edit" });
+      const switchBtn = (view, label) => h("button", { type: "button", class: "btn secondary small edit-switch-btn", "data-view": view, onclick: () => { split.dataset.view = view; sync(); window.scrollTo(0, 0); } }, label);
+      const bSwitch = h("div", { class: "edit-switch", role: "group", "aria-label": "Alternar entre edição e prévia" }, switchBtn("edit", "Editar"), switchBtn("preview", "Ver prévia"));
+      const sync = () => bSwitch.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === split.dataset.view)));
+      sync();
+      split.append(
+        h("div", { class: "edit-main" }, form,
+          product ? variantsSection(ctx, product, draw) : h("p", { class: "notice" }, "Depois de criar o produto, você cadastra as cores, tamanhos e o estoque."),
+          product ? imagesSection(ctx, product, draw) : null),
+        h("aside", { class: "edit-preview" }, panel.el));
       root.replaceChildren(...[
         h("p", { class: "crumbs" }, h("a", { href: "#/produtos" }, "Produtos"), " / ", product?.name ?? "Novo"),
         h("h1", {}, product ? product.name : "Novo produto"),
         ctx.flash ? flashNotice(ctx) : null,
-        productForm(ctx, categories, product, draw, newPhotos),
-        product ? variantsSection(ctx, product, draw) : h("p", { class: "notice" }, "Depois de criar o produto, você cadastra as cores, tamanhos e o estoque."),
-        product ? imagesSection(ctx, product, draw) : null].filter(Boolean));
+        bSwitch, split].filter(Boolean));
     });
   draw();
   return root;
@@ -85,6 +104,8 @@ function productForm(ctx, categories, p, redraw, photos) {
   };
   active.addEventListener("change", updateVis); pub.addEventListener("input", updateVis); updateVis();
   const btn = h("button", { type: "submit", class: "btn" }, p ? "Salvar alterações" : "Criar produto");
+  const readValues = () => ({ name: name.value, category_id: cat.value, price: price.value, compare_at: compare.value, fabric: fabric.value, description: desc.value,
+    featured: featured.checked, active: active.checked, published_at: pub.value });
 
   const form = h("form", { class: "panel", novalidate: true },
     h("div", { class: "grid2" },
@@ -131,6 +152,7 @@ function productForm(ctx, categories, p, redraw, photos) {
     }
   });
   form.addEventListener("submit", (e) => { e.preventDefault(); save(); });
+  form.readValues = readValues; // usado pela prévia (somente leitura)
   return form;
 }
 
@@ -292,6 +314,8 @@ function photoPicker({ onChange } = {}) {
 
   return {
     queue,
+    /** Fotos válidas na ordem da seleção, com URL local (para a prévia; nada é enviado). */
+    previewImages: () => queue.items.filter((it) => it.check.ok && urls.has(it.key)).map((it) => ({ url: urls.get(it.key), alt: it.alt })),
     el: h("div", { class: "photo-picker" }, input, pick, status, info, list),
     reset() { for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
   };
