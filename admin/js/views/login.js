@@ -1,5 +1,6 @@
 import { h } from "../lib/dom.js";
 import { guard } from "../lib/ui.js";
+import { BRAND, brandMark } from "../lib/brand.js";
 
 const USERNAME_AUTH_DOMAIN = "admin.francine-furini.local";
 
@@ -52,8 +53,9 @@ export function loginView(ctx, notice) {
   });
   return h("main", { id: "main", class: "login" },
     h("form", { class: "login-card", onsubmit: (e) => { e.preventDefault(); submit(); } },
+      brandMark(h, "login-mark"),
       h("p", { class: "eyebrow" }, "Painel administrativo"),
-      h("h1", {}, "Francine Furini Store"),
+      h("h1", {}, BRAND.name),
       msg,
       h("div", { class: "field" }, h("label", { for: "login" }, "Login"), login),
       h("div", { class: "field" }, h("label", { for: "password" }, "Senha"), pw),
@@ -63,6 +65,7 @@ export function loginView(ctx, notice) {
 
 export function deniedView(ctx) {
   return h("main", { id: "main", class: "login" }, h("div", { class: "login-card" },
+    brandMark(h, "login-mark"),
     h("p", { class: "eyebrow" }, "Acesso negado"),
     h("h1", {}, "Sem permissão"),
     h("p", {}, "Esta conta não tem acesso de administrador a este painel."),

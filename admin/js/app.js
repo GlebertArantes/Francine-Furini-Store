@@ -4,6 +4,8 @@ import { resolveAdminConfig } from "./lib/config.js";
 import { createAuth } from "./lib/auth.js";
 import { createAdminApi } from "./lib/api.js";
 import { toast } from "./lib/ui.js";
+import { friendlyLogin } from "./lib/identity.js";
+import { BRAND, brandMark } from "./lib/brand.js";
 import { loginView, deniedView } from "./views/login.js";
 import { dashboardView } from "./views/dashboard.js";
 import { categoriesView } from "./views/categories.js";
@@ -52,10 +54,10 @@ function boot() {
   const nav = h("nav", { class: "nav", "aria-label": "Principal" }, links.map(([href, label]) => h("a", { href, "data-href": href }, label)));
   const who = h("span", { class: "who muted small" });
   const shell = h("div", { class: "shell" },
-    h("header", { class: "topbar" }, h("div", { class: "bar" }, h("a", { class: "brand", href: "#/" }, "Francine Furini", h("small", {}, "Painel")), who,
+    h("header", { class: "topbar" }, h("div", { class: "bar" }, h("a", { class: "brand", href: "#/", "aria-label": `${BRAND.name} — Painel` }, brandMark(h, "brand-mark"), h("span", { class: "brand-text" }, "Francine Furini", h("small", {}, "Painel"))), who,
       h("button", { type: "button", class: "link-btn", onclick: () => ctx.logout() }, "Sair")), nav), main);
 
-  function renderShell() { who.textContent = auth.user?.email ?? ""; appEl.replaceChildren(shell); }
+  function renderShell() { who.textContent = friendlyLogin(auth.user?.email); appEl.replaceChildren(shell); }
 
   function renderRoute() {
     if (mode !== "panel") return;
