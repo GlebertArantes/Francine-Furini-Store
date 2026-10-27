@@ -273,3 +273,10 @@ body { overflow-x: hidden; }
 .header-row .search { min-width: 0; }
 @media (min-width: 48rem) { .header-row { gap: 1.25rem; } .wordmark.has-logo { font-size: 1.15rem; } }
 @media (min-width: 64rem) { .header-row { gap: 2rem; } .wordmark.has-logo { font-size: 1.3rem; letter-spacing: .06em; } }
+
+/* Checkout: status discreto da consulta de CEP */
+.cep-status { margin: 0; min-height: 1.1em; font-size: .8125rem; color: var(--brown); }
+.cep-status[data-kind="loading"]::before { content: ""; display: inline-block; width: .7em; height: .7em; margin-right: .4em; border: 2px solid var(--nude); border-top-color: var(--brown); border-radius: 50%; animation: cepspin .8s linear infinite; vertical-align: -.05em; }
+.cep-status[data-kind="not_found"], .cep-status[data-kind="unavailable"] { color: var(--danger, #8f3b2f); }
+@keyframes cepspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .cep-status[data-kind="loading"]::before { animation: none; } }

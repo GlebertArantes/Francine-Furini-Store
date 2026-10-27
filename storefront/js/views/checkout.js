@@ -2,6 +2,7 @@ import { h, setChildren } from "../lib/dom.js";
 import { formatBRL, formatCep, formatPhone } from "../lib/format.js";
 import { subtotalCents } from "../lib/cart.js";
 import { validateCustomer, createOrderPlacer, postOrder, needsCartRefresh, errorMessage, UF_LIST, whatsappOrderMessage } from "../lib/checkout.js";
+import { createCepController, lookupCep, CEP_MESSAGES } from "../lib/cep.js";
 import { changesNotice } from "./cart.js";
 import { stateBlock, loadingGrid } from "./common.js";
 
@@ -38,7 +39,9 @@ export function checkoutView(ctx) {
       h("div", { class: "form-grid" },
         f("name", "Nome completo", { autocomplete: "name", required: true, maxlength: 160 }),
         f("phone", "WhatsApp (com DDD)", { type: "tel", inputmode: "tel", autocomplete: "tel", required: true, maxlength: 20 }, "c3"),
-        f("postal_code", "CEP", { inputmode: "numeric", autocomplete: "postal-code", required: true, maxlength: 9 }, "c3"),
+        h("div", { class: "field c3" }, h("label", { for: "c-postal_code" }, "CEP"),
+          h("input", { id: "c-postal_code", name: "postal_code", type: "text", inputmode: "numeric", autocomplete: "postal-code", required: true, maxlength: 9, "aria-describedby": "e-postal_code cep-status" }),
+          h("p", { class: "cep-status", id: "cep-status", role: "status", "aria-live": "polite" }), h("p", { class: "err", id: "e-postal_code", role: "alert" })),
         f("address_line", "Endereço", { autocomplete: "address-line1", required: true, maxlength: 220 }, "c4"),
         f("address_number", "Número", { autocomplete: "off", required: true, maxlength: 30 }, "c2"),
         f("address_complement", "Complemento (opcional)", { autocomplete: "address-line2", maxlength: 120 }),
@@ -56,7 +59,16 @@ export function checkoutView(ctx) {
 
     if (saved) for (const [k, v] of Object.entries(saved)) if (form.elements[k]) form.elements[k].value = v;
     form.elements.phone.addEventListener("blur", (e) => { e.target.value = formatPhone(e.target.value); });
-    form.elements.postal_code.addEventListener("input", (e) => { e.target.value = formatCep(e.target.value); });
+    // ViaCEP: preenche rua/bairro/cidade/UF ao completar 8 dígitos; nunca sobrescreve o que a cliente digitou.
+    const cepStatus = form.querySelector("#cep-status");
+    const cep = createCepController({
+      lookup: ctx.lookupCep ?? ((c, o) => lookupCep(c, o)),
+      onStatus: (k) => { cepStatus.textContent = k ? CEP_MESSAGES[k] : ""; cepStatus.dataset.kind = k ?? ""; if (k) form.elements.postal_code.removeAttribute("aria-invalid"); },
+      fill: (addr) => { for (const [k, v] of Object.entries(addr)) if (form.elements[k]) form.elements[k].value = v; },
+    });
+    for (const k of ["address_line", "neighborhood", "city", "state"]) form.elements[k].addEventListener(k === "state" ? "change" : "input", () => cep.touch(k));
+    form.elements.postal_code.addEventListener("input", (e) => { e.target.value = formatCep(e.target.value); cep.input(e.target.value); });
+    if (saved?.postal_code) cep.input(saved.postal_code);
 
     const showErrors = (errors = {}) => {
       for (const el of form.elements) {
