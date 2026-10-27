@@ -47,18 +47,33 @@ export async function lookupCep(rawCep, { fetchFn = (u, i) => fetch(u, i), signa
 
 /**
  * Controlador do formulário: dispara a consulta ao completar 8 dígitos, descarta respostas antigas (o último CEP vence)
- * e só preenche campos que a cliente NÃO editou manualmente. Independente de DOM: o chamador fornece os callbacks.
+ * e só mexe em campos que a cliente NÃO editou. Independente de DOM: o chamador fornece os callbacks.
  *   onStatus(kind|null) — "loading" | "found" | "not_found" | "unavailable" | null
- *   fill(address, skip)  — recebe só os campos permitidos
+ *   read(field)         — valor atual do campo
+ *   fill(address)       — recebe só os campos permitidos
+ *   clear(fields)       — esvazia campos que foram autopreenchidos para um CEP anterior e continuam intactos
+ * Regras: nunca sobrescreve/apaga o que foi digitado (campo "touched" ou valor diferente do autopreenchido);
+ * ao mudar o CEP, apaga só os valores autopreenchidos anteriores que a cliente não alterou.
  */
-export function createCepController({ lookup = lookupCep, onStatus, fill }) {
-  let seq = 0, current = null, lastCep = null;
+export function createCepController({ lookup = lookupCep, onStatus, fill, clear, read = () => "" }) {
+  let seq = 0, current = null, lastCep = null, filledFor = null;
   const touched = new Set();
+  const auto = new Map(); // campo -> valor autopreenchido (ainda não editado)
+
+  const dropStale = () => {
+    const stale = [];
+    for (const [k, v] of auto) if (!touched.has(k) && read(k) === v) stale.push(k);
+    auto.clear(); filledFor = null;
+    if (stale.length) clear?.(stale);
+  };
+
   return {
-    touch(field) { touched.add(field); },
+    /** A cliente editou o campo: a partir daqui ele é dela. */
+    touch(field) { touched.add(field); auto.delete(field); },
     /** Chamado a cada digitação no CEP. */
     input(rawCep) {
       const cep = onlyDigits(rawCep);
+      if (auto.size && cep !== filledFor) dropStale(); // CEP mudou: dados automáticos do CEP anterior saem
       if (cep.length !== 8) { seq++; current?.abort(); current = null; lastCep = null; onStatus?.(null); return Promise.resolve(null); }
       if (cep === lastCep) return Promise.resolve(null);
       lastCep = cep;
@@ -70,7 +85,13 @@ export function createCepController({ lookup = lookupCep, onStatus, fill }) {
         current = null;
         if (!r.ok) { if (r.code === "not_found" || r.code === "unavailable") lastCep = null; onStatus?.(r.code === "not_found" ? "not_found" : "unavailable"); return r; }
         const allowed = {};
-        for (const [k, v] of Object.entries(r.address)) if (v && !touched.has(k)) allowed[k] = v;
+        for (const [k, v] of Object.entries(r.address)) {
+          if (!v || touched.has(k)) continue;
+          const now = read(k);
+          if (now === "" || now === auto.get(k)) allowed[k] = v; // nunca por cima de texto digitado
+        }
+        for (const [k, v] of Object.entries(allowed)) auto.set(k, v);
+        filledFor = cep;
         fill?.(allowed);
         onStatus?.("found");
         return r;

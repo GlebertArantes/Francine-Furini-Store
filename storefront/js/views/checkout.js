@@ -64,8 +64,12 @@ export function checkoutView(ctx) {
     const cep = createCepController({
       lookup: ctx.lookupCep ?? ((c, o) => lookupCep(c, o)),
       onStatus: (k) => { cepStatus.textContent = k ? CEP_MESSAGES[k] : ""; cepStatus.dataset.kind = k ?? ""; if (k) form.elements.postal_code.removeAttribute("aria-invalid"); },
+      read: (k) => form.elements[k]?.value ?? "",
       fill: (addr) => { for (const [k, v] of Object.entries(addr)) if (form.elements[k]) form.elements[k].value = v; },
+      clear: (keys) => { for (const k of keys) if (form.elements[k]) form.elements[k].value = ""; },
     });
+    // Valores já presentes (ex.: formulário redesenhado após ajuste de estoque) pertencem à cliente: nunca são sobrescritos.
+    for (const k of ["address_line", "neighborhood", "city", "state"]) if (saved?.[k]) cep.touch(k);
     for (const k of ["address_line", "neighborhood", "city", "state"]) form.elements[k].addEventListener(k === "state" ? "change" : "input", () => cep.touch(k));
     form.elements.postal_code.addEventListener("input", (e) => { e.target.value = formatCep(e.target.value); cep.input(e.target.value); });
     if (saved?.postal_code) cep.input(saved.postal_code);

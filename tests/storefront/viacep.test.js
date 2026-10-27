@@ -95,7 +95,80 @@ test("integração no checkout: aria-live, campos editáveis, sem alterar valida
   assert.match(lib, /postal_code = "CEP deve ter 8 números\./); assert.ok(!/viacep/i.test(lib), "validação/payload não dependem do ViaCEP");
 });
 test("CSP: ViaCEP só na vitrine; admin e demais diretivas intactos", () => {
-  assert.match(read("storefront/_headers"), /connect-src 'self' https:\/\/txgatyftvtpkgqlncxju\.supabase\.co wss:\/\/txgatyftvtpkgqlncxju\.supabase\.co https:\/\/viacep\.com\.br;/);
+  // sem citar o identificador do projeto: Supabase (https + wss, mesmo host) e depois o ViaCEP
+  const m = /connect-src 'self' https:\/\/([a-z0-9]+)\.supabase\.co wss:\/\/([a-z0-9]+)\.supabase\.co https:\/\/viacep\.com\.br;/.exec(read("storefront/_headers"));
+  assert.ok(m && m[1] === m[2], "connect-src: Supabase do projeto + ViaCEP");
   assert.ok(!/viacep/i.test(read("admin/_headers")));
   assert.ok(!/default-src[^;]*viacep|script-src[^;]*viacep|img-src[^;]*viacep/i.test(read("storefront/_headers")));
+});
+
+// ---- mudança de CEP após preenchimento automático ---------------------------------------------
+function form(lookup) {
+  const f = { address_line: "", neighborhood: "", city: "", state: "", address_number: "" };
+  const log = [];
+  const c = createCepController({
+    lookup, read: (k) => f[k],
+    onStatus: (k) => log.push(k),
+    fill: (a) => Object.assign(f, a),
+    clear: (keys) => { for (const k of keys) f[k] = ""; },
+  });
+  const type = (k, v) => { f[k] = v; c.touch(k); }; // digitação manual
+  return { f, c, log, type };
+}
+const addrA = { address_line: "Rua A", neighborhood: "Bairro A", city: "Cidade A", state: "MG" };
+const addrB = { address_line: "Rua B", neighborhood: "Bairro B", city: "Cidade B", state: "SP" };
+const byCep = (map) => async (cep) => map[cep] ?? { ok: false, code: "not_found" };
+
+test("novo CEP válido: endereço automático anterior é substituído (não ficam dados misturados)", async () => {
+  const { f, c } = form(byCep({ 11111111: { ok: true, address: addrA }, 22222222: { ok: true, address: addrB } }));
+  await c.input("11111-111"); assert.equal(f.address_line, "Rua A");
+  await c.input("22222-222"); assert.deepEqual([f.address_line, f.city, f.state], ["Rua B", "Cidade B", "SP"]);
+});
+test("CEP apagado/incompleto: limpa o que era automático e intacto; número manual permanece", async () => {
+  const { f, c, type } = form(byCep({ 11111111: { ok: true, address: addrA } }));
+  await c.input("11111-111"); type("address_number", "15");
+  c.input("11111-11");
+  assert.deepEqual([f.address_line, f.neighborhood, f.city, f.state], ["", "", "", ""]);
+  assert.equal(f.address_number, "15");
+});
+test("CEP inexistente depois de um preenchimento: dados do CEP antigo saem; falha de consulta idem; entrada manual segue possível", async () => {
+  for (const code of ["not_found", "unavailable"]) {
+    const { f, c, log, type } = form(byCep({ 11111111: { ok: true, address: addrA }, 99999999: { ok: false, code } }));
+    await c.input("11111-111"); await c.input("99999-999");
+    assert.deepEqual([f.address_line, f.city, f.state], ["", "", ""], code);
+    assert.equal(log.at(-1), code);
+    type("city", "Digitada"); assert.equal(f.city, "Digitada");
+  }
+});
+test("edição manual é preservada: campo digitado não é apagado nem sobrescrito ao mudar o CEP", async () => {
+  const { f, c, type } = form(byCep({ 11111111: { ok: true, address: addrA }, 22222222: { ok: true, address: addrB } }));
+  await c.input("11111-111");
+  type("city", "Minha Cidade"); // cliente alterou a cidade automática
+  await c.input("22222-222");
+  assert.equal(f.city, "Minha Cidade");
+  assert.deepEqual([f.address_line, f.neighborhood, f.state], ["Rua B", "Bairro B", "SP"], "campos não editados acompanham o novo CEP");
+  c.input("2222");
+  assert.equal(f.city, "Minha Cidade"); assert.equal(f.address_line, "");
+});
+test("texto já presente (digitado ou restaurado) nunca é coberto pelo preenchimento automático", async () => {
+  const f = { address_line: "Rua que a cliente escreveu", neighborhood: "", city: "", state: "" };
+  const c = createCepController({ lookup: byCep({ 11111111: { ok: true, address: addrA } }), read: (k) => f[k], fill: (a) => Object.assign(f, a) });
+  await c.input("11111-111");
+  assert.equal(f.address_line, "Rua que a cliente escreveu"); assert.equal(f.city, "Cidade A");
+});
+test("CEP genérico (só cidade/UF): preenche o que veio e remove rua/bairro do CEP anterior", async () => {
+  const { f, c } = form(byCep({ 11111111: { ok: true, address: addrA }, 33333333: { ok: true, address: { address_line: "", neighborhood: "", city: "Cidade G", state: "GO" } } }));
+  await c.input("11111-111"); await c.input("33333-333");
+  assert.deepEqual([f.address_line, f.neighborhood, f.city, f.state], ["", "", "Cidade G", "GO"]);
+});
+test("digitar o mesmo CEP de novo não apaga nem repete a consulta; resposta atrasada de CEP antigo não reaparece", async () => {
+  let calls = 0; const { f, c } = form(async (cep) => { calls++; return { ok: true, address: addrA }; });
+  await c.input("11111-111"); await c.input("11111-111"); assert.equal(calls, 1); assert.equal(f.city, "Cidade A");
+  const resolvers = {}; const g = form((cep) => new Promise((r) => { resolvers[cep] = r; }));
+  const p = g.c.input("44444-444"); g.c.input("44444-44"); resolvers["44444444"]({ ok: true, address: addrB }); await p;
+  assert.equal(g.f.city, "", "resposta antiga descartada");
+});
+test("checkout: leitura/limpeza ligadas ao formulário e valores restaurados tratados como da cliente", () => {
+  const v = read("storefront/js/views/checkout.js");
+  assert.match(v, /read: \(k\) =>/); assert.match(v, /clear: \(keys\)/); assert.match(v, /if \(saved\?\.\[k\]\) cep\.touch\(k\)/);
 });
