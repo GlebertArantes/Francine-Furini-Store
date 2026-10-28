@@ -77,16 +77,6 @@ export function homeView(ctx, query) {
       body.append(gridOf(list));
     }
     parts.push(body);
-    if (!filtered) {
-      parts.push(h("section", { class: "wrap vip-section", "aria-labelledby": "vip-title" },
-        h("div", { class: "vip-banner" },
-          h("div", { class: "vip-copy" },
-            h("p", { class: "eyebrow" }, "Mais perto de você"),
-            h("h2", { id: "vip-title" }, "Faça parte do nosso grupo VIP"),
-            h("p", {}, "Receba novidades e acompanhe os lançamentos da Francine Furini Store.")),
-          h("a", { class: "btn", href: "https://chat.whatsapp.com/BTfFPclRbd8GpZSt9MuiaJ", target: "_blank", rel: "noopener noreferrer" },
-            "Entrar no grupo VIP", h("span", { class: "sr-only" }, " (abre em nova aba)")))));
-    }
     if (!filtered) parts.push(h("div", { class: "wrap" }, howToBuySection()));
     root.replaceChildren(...parts);
   }
