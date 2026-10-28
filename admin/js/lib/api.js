@@ -102,6 +102,12 @@ export function createAdminApi({ url, key, auth, fetchFn }) {
     },
     previewUrl: (path) => `${url}/storage/v1/object/public/${IMAGE_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
 
+    // Venda Rapida: leitura administrativa; baixa SOMENTE via RPC atomica e idempotente.
+    listQuickSaleProducts: () => json("GET", "products?select=id,name,price_cents,active,product_variants(id,color,size,quantity,active)&order=name.asc"),
+    listExternalSales: () => json("GET", "external_sales?select=id,channel,total_cents,created_at,external_sale_items(product_name,color,size,quantity,line_total_cents)&order=created_at.desc&limit=30"),
+    registerExternalSale: (requestId, channel, items) => rpc("admin_register_external_sale",
+      { p_request_id: requestId, p_channel: channel, p_items: items }),
+
     // Pedidos: leitura direta; escrita SOMENTE via RPC (ver orders.js).
     listOrders: (status) => json("GET", `orders?select=id,display_code,status,customer_name,created_at,subtotal_cents,shipping_cents,final_total_cents${status ? `&status=eq.${enc(status)}` : ""}&order=created_at.desc&limit=200`),
     async getOrder(id) {
