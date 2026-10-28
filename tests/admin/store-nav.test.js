@@ -24,5 +24,5 @@ test("configurações persistidas continuam alimentando a vitrine", () => {
 test("manual acompanha a retirada da aba Loja", () => {
   const manual = read("docs/MANUAL_FRANCINE.md");
   assert.doesNotMatch(manual, /toque em \*\*Loja\*\*/i);
-  assert.match(manual, /\*\*Painel\*\*, \*\*Pedidos\*\*, \*\*Produtos\*\* e \*\*Categorias\*\*/);
+  assert.match(manual, /\*\*Painel\*\*, \*\*Pedidos\*\*, \*\*Venda Rápida\*\*, \*\*Produtos\*\* e \*\*Categorias\*\*/);
 });
