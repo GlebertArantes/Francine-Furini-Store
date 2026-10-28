@@ -28,12 +28,19 @@ export function createPhotoQueue() {
         const check = items.length >= MAX_PHOTOS_PER_SELECTION
           ? { ok: false, error: `Máximo de ${MAX_PHOTOS_PER_SELECTION} fotos por vez.` }
           : validateImageFile(file);
-        items = [...items, { key: `p${++seq}`, file, alt: "", check }];
+        items = [...items, { key: `p${++seq}`, file, originalFile: file, edit: null, alt: "", check }];
       }
       return items;
     },
     remove(key) { items = items.filter((i) => i.key !== key); return items; },
     setAlt(key, alt) { items = items.map((i) => (i.key === key ? { ...i, alt } : i)); },
+    applyEdit(key, file, edit) {
+      const check = validateImageFile(file);
+      if (!check.ok || !items.some((i) => i.key === key)) return false;
+      items = items.map((i) => i.key === key ? { ...i, file, edit: { ...edit }, check } : i);
+      return true;
+    },
+    restore(key) { items = items.map((i) => i.key === key ? { ...i, file: i.originalFile, edit: null, check: validateImageFile(i.originalFile) } : i); },
     clear() { items = []; },
     /** Apenas arquivos válidos, na ordem em que foram selecionados. */
     valid: () => items.filter((i) => i.check.ok),

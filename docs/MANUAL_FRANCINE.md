@@ -81,6 +81,16 @@ Depois de criar, o painel abre a tela do produto para cadastrar **cores, tamanho
 3. **A primeira foto é a principal** (aparece na vitrine). A ordem em que você escolheu é a ordem das fotos.
 4. Ao tocar em **Criar produto**, as fotos são enviadas junto. Em produto já criado, toque em **Enviar fotos**.
 
+**Ajustar a foto antes de enviar:**
+
+1. Na foto selecionada, toque em **Ajustar foto**.
+2. Arraste a imagem para mudar a posição. Use **Zoom**, os botões **− Zoom / + Zoom** ou dois dedos no celular para aproximar e afastar. Os controles de posição também permitem mover sem arrastar.
+3. **Foto inteira** mostra toda a imagem com bordas quando necessário. **Preencher quadro** aproxima até ocupar o formato escolhido.
+4. Use **Girar à esquerda / direita** se precisar. O formato **Vitrine · retrato 3:4** corresponde aos cartões da loja; também há quadrado, horizontal e proporção original. Você pode escolher a cor do fundo das bordas.
+5. Toque em **Aplicar ajuste** para atualizar a foto selecionada. **Cancelar** mantém a seleção anterior. Antes de enviar, **Voltar à foto original** desfaz a edição.
+
+O editor trabalha numa cópia e não altera a foto da galeria do celular. Reabrir o editor usa a imagem original da seleção, evitando acumular recortes. Nada é enviado ao usar **Aplicar ajuste**: o envio acontece ao criar o produto ou tocar em **Enviar fotos**. Após o envio ou ao sair da tela, a cópia original mantida em memória não fica guardada no painel. Esta versão ajusta fotos selecionadas antes do envio; fotos já enviadas continuam com os controles de texto, ordem e remoção.
+
 **Dicas**
 - Fotos **em pé (retrato)** ficam melhor nos cartões da loja.
 - Formatos aceitos: JPEG, PNG, WebP e AVIF. O limite é 8 MB por foto; fotos maiores são **reduzidas automaticamente**.
