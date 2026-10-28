@@ -4,9 +4,9 @@ set client_min_messages = notice;
 
 -- Fixtures exclusivas de teste. O banco descartavel do CI e isolado de producao.
 insert into auth.users (id) values
-  ('00000000-0000-0000-0000-0000000000c3'),
-  ('00000000-0000-0000-0000-0000000000d4');
-insert into private.admin_users (user_id) values ('00000000-0000-0000-0000-0000000000c3');
+  ('00000000-0000-0000-0000-0000000000e5'),
+  ('00000000-0000-0000-0000-0000000000f6');
+insert into private.admin_users (user_id) values ('00000000-0000-0000-0000-0000000000e5');
 insert into public.products (id,name,slug,price_cents) values
   ('10000000-0000-0000-0000-000000000031','Camisa Teste','camisa-teste-venda-rapida',10000),
   ('10000000-0000-0000-0000-000000000032','Conjunto Teste','conjunto-teste-venda-rapida',20000);
@@ -18,8 +18,8 @@ insert into public.product_variants (id,product_id,color,size,quantity,active) v
 
 do $$
 declare
-  adm uuid := '00000000-0000-0000-0000-0000000000c3';
-  outsider uuid := '00000000-0000-0000-0000-0000000000d4';
+  adm uuid := '00000000-0000-0000-0000-0000000000e5';
+  outsider uuid := '00000000-0000-0000-0000-0000000000f6';
   rid uuid := '30000000-0000-0000-0000-000000000031';
   r jsonb;
   err text;
