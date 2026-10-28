@@ -100,7 +100,7 @@ function buildShell(ctx) {
     h("a", { class: "wrap vip-header-link", href: "https://chat.whatsapp.com/BTfFPclRbd8GpZSt9MuiaJ", target: "_blank", rel: "noopener noreferrer" },
       h("span", { class: "vip-header-icon", "aria-hidden": "true" }, icon("whatsapp")),
       h("span", { class: "vip-header-copy" },
-        h("strong", {}, "Grupo VIP no WhatsApp"),
+        h("strong", {}, "entre no GRUPO VIP", icon("lock")),
         h("span", {}, "Novidades e lançamentos, pertinho de você.")),
       h("span", { class: "vip-header-cta" }, "Entrar", h("span", { "aria-hidden": "true" }, "↗")),
       h("span", { class: "sr-only" }, " (abre em nova aba)")));

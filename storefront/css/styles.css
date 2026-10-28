@@ -37,6 +37,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .vip-header-icon .ico { width: 22px; height: 22px; }
 .vip-header-copy { display: flex; flex-direction: column; gap: .1rem; min-width: 0; line-height: 1.35; }
 .vip-header-copy strong { font-size: .875rem; font-weight: 600; letter-spacing: .025em; }
+.vip-header-copy strong .ico { width: 14px; height: 14px; margin-left: .4rem; vertical-align: -2px; }
 .vip-header-copy > span { display: none; color: #d3e8dc; font-size: .75rem; }
 .vip-header-cta { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 36px; padding: .35rem .8rem; border: 1px solid #8cb59c; border-radius: 999px; font-size: .75rem; font-weight: 600; white-space: nowrap; }
 .vip-header-link:hover .vip-header-cta { background: #fffdf9; color: #174f3d; border-color: #fffdf9; }

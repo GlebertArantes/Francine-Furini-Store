@@ -1,6 +1,10 @@
 // Ícones SVG próprios (inline, sem CDN/fontes externas). Decorativos: o texto do link é quem nomeia a ação.
 const NS = "http://www.w3.org/2000/svg";
 const PATHS = {
+  lock: [
+    ["rect", { x: "5", y: "10", width: "14", height: "11", rx: "2" }],
+    ["path", { d: "M8 10V7a4 4 0 0 1 8 0v3M12 14v3" }],
+  ],
   instagram: [
     ["rect", { x: "3.5", y: "3.5", width: "17", height: "17", rx: "5" }],
     ["circle", { cx: "12", cy: "12", r: "4" }],
