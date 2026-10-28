@@ -4,7 +4,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://txgatyftvtpkgqlncxju.supabase.co; connect-src 'self' https://txgatyftvtpkgqlncxju.supabase.co wss://txgatyftvtpkgqlncxju.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://txgatyftvtpkgqlncxju.supabase.co; connect-src 'self' https://txgatyftvtpkgqlncxju.supabase.co wss://txgatyftvtpkgqlncxju.supabase.co https://viacep.com.br; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
 
 # Arquivos sem hash de versao: revalidar em toda navegacao para nao misturar
 # imports ES antigos e novos apos um deploy (ex.: card.js + catalog.js).

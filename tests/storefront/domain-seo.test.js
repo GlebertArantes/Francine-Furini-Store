@@ -67,7 +67,9 @@ test("CSP: o domínio próprio é coberto por 'self' — não precisa de host no
     assert.ok(d["connect-src"].includes("'self'"), `${f}: connect-src 'self'`);
     assert.ok(!/francinefurinistore|francine-furini/.test(csp), `${f}: nenhum host da loja hardcoded`);
     for (const k of ["default-src", "script-src", "connect-src", "img-src"]) assert.ok(!d[k].includes("*"), `${f}: ${k} sem curinga`);
-    assert.ok(d["connect-src"].every((s) => s === "'self'" || /^(https|wss):\/\/[a-z0-9]+\.supabase\.co$/.test(s)), `${f}: conexões só para o Supabase do projeto`);
+    // Vitrine: Supabase do projeto + ViaCEP (checkout). Admin: somente Supabase.
+    const extra = f.startsWith("storefront") ? ["https://viacep.com.br"] : [];
+    assert.ok(d["connect-src"].every((s) => s === "'self'" || extra.includes(s) || /^(https|wss):\/\/[a-z0-9]+\.supabase\.co$/.test(s)), `${f}: conexões só para o Supabase do projeto${extra.length ? " e ViaCEP" : ""}`);
     assert.deepEqual(d["frame-ancestors"], ["'none'"]);
     assert.ok(d["upgrade-insecure-requests"]);
   }
