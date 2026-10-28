@@ -93,6 +93,13 @@ begin
   exception when others then err:=sqlerrm; end;
   perform pg_temp.ok('quantidade zero rejeitada',err='invalid_external_sale');
 
+  begin
+    perform public.admin_register_external_sale('30000000-0000-0000-0000-000000000038','presencial',
+      '[{"variant_id":"20000000-0000-0000-0000-000000000031","quantity":"abc"}]');
+    raise exception 'FAIL expected invalid_external_sale';
+  exception when others then err:=sqlerrm; end;
+  perform pg_temp.ok('quantidade malformada rejeitada com erro controlado',err='invalid_external_sale');
+
   r:=public.admin_register_external_sale('30000000-0000-0000-0000-000000000037','presencial',
     '[{"variant_id":"20000000-0000-0000-0000-000000000031","quantity":1}]');
   perform pg_temp.ok('segunda venda legitima baixa ultima unidade',
