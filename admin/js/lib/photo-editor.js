@@ -123,7 +123,8 @@ export async function editPhoto(file, savedState = null) {
     });
     try {
       document.body.append(dlg); draw(); dlg.showModal();
-      window.addEventListener("hashchange", onNavigate); cancel.focus();
+      window.addEventListener("hashchange", onNavigate);
+      canvas.focus({ preventScroll: true }); dlg.scrollTop = 0;
     } catch (e) { finish(null, e); }
   });
 }
