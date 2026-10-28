@@ -293,7 +293,7 @@ export function photoPicker({ onChange } = {}) {
       if (it.check.ok && !urls.has(it.key)) urls.set(it.key, URL.createObjectURL(it.file));
       const alt = h("input", { value: it.alt, maxlength: 200, placeholder: "Texto alternativo (opcional)", "aria-label": `Texto alternativo de ${it.file.name}`, oninput: (e) => queue.setAlt(it.key, e.target.value) });
       const rm = h("button", { type: "button", class: "link-btn danger", "aria-label": `Remover ${it.file.name} da seleção`, onclick: () => { const u = urls.get(it.key); if (u) { URL.revokeObjectURL(u); urls.delete(it.key); } queue.remove(it.key); draw(); } }, "Remover da seleção");
-      const adjust = h("button", { type: "button", class: "btn small secondary", disabled: pending > 0, onclick: async () => {
+      const adjust = h("button", { type: "button", class: "btn small secondary", "data-edit-photo": it.key, disabled: pending > 0, onclick: async () => {
         if (pending) return;
         const current = generation;
         pending++; input.disabled = true; onChange?.(false);
@@ -301,7 +301,10 @@ export function photoPicker({ onChange } = {}) {
           const edited = await editPhoto(it.originalFile, it.edit);
           if (current === generation && edited && queue.applyEdit(it.key, edited.file, edited.state)) releaseUrl(it.key);
         } catch { toast("Não foi possível abrir esta foto. Escolha uma imagem JPEG, PNG, WebP ou AVIF válida.", "error"); }
-        finally { pending--; input.disabled = pending > 0; if (current === generation) draw(); }
+        finally {
+          pending--; input.disabled = pending > 0;
+          if (current === generation) { draw(); list.querySelector(`[data-edit-photo="${it.key}"]`)?.focus(); }
+        }
       } }, "Ajustar foto");
       const restore = it.edit ? h("button", { type: "button", class: "link-btn", disabled: pending > 0, onclick: () => {
         if (pending) return;
@@ -329,9 +332,8 @@ export function photoPicker({ onChange } = {}) {
       }
       prepared.push(f);
     }
-    note = shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : "";
     pending--; input.disabled = pending > 0;
-    if (current === generation) { queue.add(prepared); draw(); }
+    if (current === generation) { note = shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : ""; queue.add(prepared); draw(); }
   });
   draw();
 

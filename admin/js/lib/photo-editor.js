@@ -15,7 +15,7 @@ export async function editPhoto(file, savedState = null) {
       "aria-label": "Prévia da foto. Arraste para mover ou use as setas do teclado.", "aria-describedby": `${id}-help` });
     const msg = h("p", { class: "err", role: "alert" });
     const zoomValue = h("output", {});
-    const zoom = h("input", { type: "range", min: ".5", max: "32", step: ".01", "aria-label": "Zoom da foto" });
+    const zoom = h("input", { type: "range", min: ".5", max: "4", step: ".01", "aria-label": "Zoom da foto" });
     const x = h("input", { type: "range", min: "-100", max: "100", step: "1", "aria-label": "Posição horizontal" });
     const y = h("input", { type: "range", min: "-100", max: "100", step: "1", "aria-label": "Posição vertical" });
     const ratio = h("select", { "aria-label": "Formato da foto" },
@@ -33,6 +33,7 @@ export async function editPhoto(file, savedState = null) {
       const context = canvas.getContext("2d");
       if (!context) throw new Error("canvas_unavailable");
       drawPhoto(context, image, state, canvas.width, canvas.height);
+      zoom.max = String(Math.min(32, Math.max(4, fillPhotoZoom(image, state) * 2, state.zoom)));
       zoom.value = String(state.zoom); x.value = String(Math.round(state.panX * 100)); y.value = String(Math.round(state.panY * 100));
       zoomValue.textContent = ` ${Math.round(state.zoom * 100)}%`;
       zoom.setAttribute("aria-valuetext", `${Math.round(state.zoom * 100)} por cento`);
