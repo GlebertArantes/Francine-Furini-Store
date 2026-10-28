@@ -132,6 +132,24 @@ details.more[open] summary { margin-bottom: .5rem; }
 .file-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
 .file-input:focus-visible + label { outline: 2px solid var(--brown); outline-offset: 2px; }
 .photo-picker { display: grid; gap: .5rem; justify-items: start; }
+.photo-picker .previews { width: 100%; }
+.preview .link-btn { text-align: left; }
+dialog.photo-editor { box-sizing: border-box; width: min(60rem, calc(100% - 1rem)); max-height: calc(100dvh - 1rem); overflow: auto; padding: 1.25rem; border: 1px solid var(--nude); background: var(--paper); color: var(--choc); }
+dialog.photo-editor::backdrop { background: rgba(30,24,20,.65); }
+.photo-editor-head p { max-width: 58rem; margin-bottom: 1rem; }
+.photo-editor-layout { display: grid; gap: 1.25rem; }
+.photo-editor-stage { min-width: 0; display: grid; place-items: center; padding: .75rem; background: var(--sand); border: 1px solid var(--line); }
+.photo-editor-canvas { display: block; max-width: 100%; width: auto; height: auto; max-height: 45dvh; box-shadow: 0 1px 8px rgba(0,0,0,.15); touch-action: none; cursor: grab; }
+.photo-editor-canvas:active { cursor: grabbing; }
+.photo-editor-tools { min-width: 0; display: grid; align-content: start; gap: .8rem; }
+.photo-editor-field { display: grid; gap: .25rem; font-size: .875rem; }
+.photo-editor-field > span { font-weight: 600; }
+.photo-editor-field input[type="range"] { width: 100%; min-height: 44px; padding: 0; accent-color: var(--brown); }
+.photo-editor-tools .btn-row { flex-wrap: wrap; }
+.photo-editor-tools .btn { min-height: 44px; }
+.photo-editor-actions { position: sticky; bottom: -1.25rem; display: flex; gap: .75rem; justify-content: flex-end; background: var(--paper); padding-block: 1rem; margin-top: .5rem; border-top: 1px solid var(--line); }
+@media (min-width: 48rem) { .photo-editor-layout { grid-template-columns: minmax(0,1fr) minmax(17rem,.8fr); } .photo-editor-canvas { max-height: 65dvh; } }
+@media (max-width: 30rem) { .photo-editor-actions > button { flex: 1; } }
 .photo-picker .btn { width: 100%; }
 @media (min-width: 40rem) { .photo-picker .btn { width: auto; } }
 

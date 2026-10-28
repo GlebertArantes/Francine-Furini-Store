@@ -2,6 +2,7 @@ import { h } from "../lib/dom.js";
 import { formatBRL, centsToInput } from "../lib/money.js";
 import { validateProduct, validateVariant, slugify, stockLevel, reorderImages, isoToLocalInput, NEW_PRODUCT_DEFAULTS, visibilityInfo, publishWarnings } from "../lib/rules.js";
 import { shouldShrink, shrinkImage } from "../lib/image-resize.js";
+import { editPhoto } from "../lib/photo-editor.js";
 import { loadInto, guard, toast, field, showFieldErrors, confirmDialog, stateBox } from "../lib/ui.js";
 import { createPreviewPanel } from "./product-preview.js";
 import { createPhotoQueue, uploadPhotos, createProductWithPhotos, summarizeUpload } from "../lib/photos.js";
@@ -123,6 +124,7 @@ function productForm(ctx, categories, p, redraw, photos) {
         field("published_at", "Publicar em (opcional)", pub, "Vazio = visível assim que estiver ativo."))),
     btn);
   const save = guard(btn, async () => {
+    if (photos?.busy) { toast("Aguarde terminar o ajuste das fotos antes de criar o produto.", "error"); return; }
     const v = validateProduct({ name: name.value, slug: slug.value, category_id: cat.value, sku: sku.value, price: price.value, compare_at: compare.value,
       fabric: fabric.value, description: desc.value, published_at: pub.value, featured: featured.checked, active: active.checked });
     showFieldErrors(form, v.errors);
@@ -214,9 +216,11 @@ function imagesSection(ctx, p, redraw) {
   const images = [...(p.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
   const uploadBtn = h("button", { type: "button", class: "btn", disabled: true }, "Enviar fotos");
   const pk = photoPicker({ onChange: (has) => { uploadBtn.disabled = !has; } });
+  window.addEventListener("hashchange", () => pk.reset(), { once: true });
   let moving = false;
 
   const upload = guard(uploadBtn, async () => {
+    if (pk.busy) { toast("Aguarde terminar o ajuste das fotos antes de enviar.", "error"); return; }
     const start = images.reduce((m, i) => Math.max(m, i.sort_order), -1) + 1;
     const r = await uploadPhotos(ctx.api, p.id, pk.queue.valid(), start, { onProgress: ({ done, total }) => { uploadBtn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
     if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
@@ -271,7 +275,7 @@ function flashNotice(ctx) {
  * Seletor de fotos reutilizável (criação e edição): várias fotos, preview, texto alternativo e remoção
  * da seleção. Mantém tudo em memória (File + URL local); nenhuma requisição é feita aqui.
  */
-function photoPicker({ onChange } = {}) {
+export function photoPicker({ onChange } = {}) {
   const queue = createPhotoQueue();
   const urls = new Map();
   const id = `pick-${Math.random().toString(36).slice(2, 6)}`;
@@ -280,24 +284,42 @@ function photoPicker({ onChange } = {}) {
   const pick = h("label", { class: "btn secondary", for: id }, "Escolher fotos da galeria");
   const status = h("p", { class: "muted small", role: "status", "aria-live": "polite" });
   const list = h("div", { class: "previews" });
-  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada (fotos maiores são reduzidas automaticamente). A ordem de seleção é a ordem das fotos: a primeira é a principal.");
-  let note = "";
+  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada (fotos maiores são reduzidas automaticamente). A primeira foto é a principal. Use Ajustar foto para mover, girar e mudar o zoom antes de enviar.");
+  let note = "", pending = 0, generation = 0;
+  const releaseUrl = (key) => { const url = urls.get(key); if (url) URL.revokeObjectURL(url); urls.delete(key); };
 
   const draw = () => {
     list.replaceChildren(...queue.items.map((it, i) => {
       if (it.check.ok && !urls.has(it.key)) urls.set(it.key, URL.createObjectURL(it.file));
       const alt = h("input", { value: it.alt, maxlength: 200, placeholder: "Texto alternativo (opcional)", "aria-label": `Texto alternativo de ${it.file.name}`, oninput: (e) => queue.setAlt(it.key, e.target.value) });
       const rm = h("button", { type: "button", class: "link-btn danger", "aria-label": `Remover ${it.file.name} da seleção`, onclick: () => { const u = urls.get(it.key); if (u) { URL.revokeObjectURL(u); urls.delete(it.key); } queue.remove(it.key); draw(); } }, "Remover da seleção");
+      const adjust = h("button", { type: "button", class: "btn small secondary", disabled: pending > 0, onclick: async () => {
+        if (pending) return;
+        const current = generation;
+        pending++; input.disabled = true; onChange?.(false);
+        try {
+          const edited = await editPhoto(it.originalFile, it.edit);
+          if (current === generation && edited && queue.applyEdit(it.key, edited.file, edited.state)) releaseUrl(it.key);
+        } catch { toast("Não foi possível abrir esta foto. Escolha uma imagem JPEG, PNG, WebP ou AVIF válida.", "error"); }
+        finally { pending--; input.disabled = pending > 0; if (current === generation) draw(); }
+      } }, "Ajustar foto");
+      const restore = it.edit ? h("button", { type: "button", class: "link-btn", disabled: pending > 0, onclick: () => {
+        if (pending) return;
+        queue.restore(it.key); releaseUrl(it.key); draw();
+      } }, "Voltar à foto original") : null;
       return h("figure", { class: `preview${it.check.ok ? "" : " bad"}`, "data-photo": it.file.name },
         urls.has(it.key) ? h("img", { src: urls.get(it.key), alt: "Pré-visualização" }) : null,
         h("figcaption", {}, it.check.ok ? `${i === 0 ? "Principal · " : ""}${it.file.name}` : it.file.name),
-        it.check.ok ? alt : h("p", { class: "err" }, it.check.error), rm);
+        it.check.ok ? alt : h("p", { class: "err" }, it.check.error), it.check.ok ? adjust : null, restore, rm);
     }));
     const n = queue.valid().length;
     status.textContent = `${n ? `${n} foto(s) pronta(s) para enviar.` : "Nenhuma foto selecionada."}${note ? ` ${note}` : ""}`;
-    onChange?.(n > 0);
+    onChange?.(n > 0 && pending === 0);
   };
   input.addEventListener("change", async () => {
+    if (pending) return;
+    const current = generation;
+    pending++; input.disabled = true; onChange?.(false);
     const files = [...input.files]; input.value = "";
     const prepared = []; let shrunk = 0;
     for (const f of files) {
@@ -308,15 +330,17 @@ function photoPicker({ onChange } = {}) {
       prepared.push(f);
     }
     note = shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : "";
-    queue.add(prepared); draw();
+    pending--; input.disabled = pending > 0;
+    if (current === generation) { queue.add(prepared); draw(); }
   });
   draw();
 
   return {
     queue,
+    get busy() { return pending > 0; },
     /** Fotos válidas na ordem da seleção, com URL local (para a prévia; nada é enviado). */
     previewImages: () => queue.items.filter((it) => it.check.ok && urls.has(it.key)).map((it) => ({ url: urls.get(it.key), alt: it.alt })),
     el: h("div", { class: "photo-picker" }, input, pick, status, info, list),
-    reset() { for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
+    reset() { generation++; for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
   };
 }
