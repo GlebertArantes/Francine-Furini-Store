@@ -19,7 +19,7 @@
 2. Digite o **login** e a **senha** que você recebeu e toque em **Entrar**.
 3. Para sair, toque em **Sair** (canto superior direito). Faça isso sempre que usar um aparelho que não é só seu.
 
-No topo ficam os atalhos: **Painel**, **Pedidos**, **Produtos** e **Categorias**.
+No topo ficam os atalhos: **Painel**, **Pedidos**, **Venda Rápida**, **Produtos** e **Categorias**.
 
 **Se aparecer “Sua sessão expirou”:** é normal depois de algum tempo parada. Entre de novo.
 **Se aparecer “Acesso negado”:** o usuário usado não tem permissão. Toque em **Sair** e fale com o suporte.
@@ -259,3 +259,19 @@ O pedido fica **Cancelado** e o **estoque não muda** (porque ainda não tinha b
 - [ ] Cores e tamanhos cadastrados, com a quantidade certa
 - [ ] **Ativo** marcado → *Publicar na loja agora?* → confirmar
 - [ ] Abrir a loja no celular e olhar o produto
+
+
+---
+
+## Venda Rápida — vendas fora do site
+
+Use somente para peças **já vendidas e com pagamento confirmado** pelo WhatsApp, Instagram ou presencialmente. Pedidos criados na loja continuam sendo concluídos normalmente na aba **Pedidos** — não registre a mesma venda nos dois lugares.
+
+1. Abra **Venda Rápida** no menu do painel.
+2. Busque a peça pelo nome; confira **cor**, **tamanho** e **quantidade disponível**.
+3. Toque em **Vendi 1** para incluir uma unidade no resumo. Para vender mais peças, repita ou use **+** e **−**.
+4. Selecione onde vendeu: WhatsApp, Instagram, Presencial ou Outro.
+5. Confira tudo e toque em **Confirmar venda**. A baixa só acontece após confirmar no aviso.
+6. Veja a confirmação e o registro em **Últimas vendas externas**.
+
+**Atenção:** o sistema não aceita estoque insuficiente e protege contra baixas duplicadas da mesma tentativa. Se a conexão cair após confirmar, **confira o histórico antes de registrar outra venda**. Esta primeira versão não faz estorno automático; se registrou algo incorreto, procure a TaskZap antes de ajustar o estoque.
