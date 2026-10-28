@@ -96,7 +96,15 @@ function buildShell(ctx) {
   const input = h("input", { type: "search", name: "q", id: "q", placeholder: "Buscar peças", autocomplete: "off", enterkeyhint: "search", "aria-label": "Buscar peças" });
   const wordmark = h("a", { class: wordmarkClass(), href: "#/", "aria-label": "Francine Furini Store — início" }, ...wordmarkContent(h));
   const announce = h("div", { class: "announce hidden", role: "region", "aria-label": "Aviso" });
-  const header = h("header", { class: "site-header" }, announce,
+  const vip = h("div", { class: "vip-header" },
+    h("a", { class: "wrap vip-header-link", href: "https://chat.whatsapp.com/BTfFPclRbd8GpZSt9MuiaJ", target: "_blank", rel: "noopener noreferrer" },
+      h("span", { class: "vip-header-icon", "aria-hidden": "true" }, icon("whatsapp")),
+      h("span", { class: "vip-header-copy" },
+        h("strong", {}, "Grupo VIP no WhatsApp"),
+        h("span", {}, "Novidades e lançamentos, pertinho de você.")),
+      h("span", { class: "vip-header-cta" }, "Entrar", h("span", { "aria-hidden": "true" }, "↗")),
+      h("span", { class: "sr-only" }, " (abre em nova aba)")));
+  const header = h("header", { class: "site-header" }, vip, announce,
     h("div", { class: "wrap header-row" }, wordmark,
       h("form", { class: "search", role: "search", onsubmit: (e) => { e.preventDefault(); const q = input.value.trim(); ctx.navigate(q ? `#/?q=${encodeURIComponent(q)}` : "#/"); } },
         input, h("button", { type: "submit", "aria-label": "Buscar" }, "Buscar")),
