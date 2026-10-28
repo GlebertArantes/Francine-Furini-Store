@@ -35,8 +35,8 @@ export function homeView(ctx, query) {
     if (!filtered) {
       parts.push(h("section", { class: "hero" }, h("div", { class: "wrap" },
         h("p", { class: "eyebrow" }, ctx.settings.store_name || "Francine Furini Store"),
-        h("h1", {}, "Moda feminina com elegância e atendimento próximo"),
-        h("p", {}, "Peças pensadas para vestir bem, com a atenção de quem escolhe cada detalhe junto com você."),
+        h("h1", {}, "Seu estilo. Sua essência."),
+        h("p", {}, "Moda feminina para mulheres que expressam sua personalidade em cada detalhe."),
         h("a", { class: "btn", href: "#catalogo" , onclick: (e) => { e.preventDefault(); document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" }); } }, "Ver coleção"))));
     }
 
