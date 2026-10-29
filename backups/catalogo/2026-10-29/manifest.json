@@ -1,0 +1,78 @@
+{
+  "captured_at": "2026-10-29T17:41:40.530668+00:00",
+  "scope": "public_storefront_only",
+  "products": 4,
+  "images": [
+    {
+      "storage_path": "products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8g0m-wh1cjffd.jpg",
+      "file": "images/products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8g0m-wh1cjffd.jpg",
+      "bytes": 1587772,
+      "sha256": "0036e19aee7faab37becedaa0481063b2f62166183f2421b8b35438e59b62fae",
+      "content_type": "image/jpeg"
+    },
+    {
+      "storage_path": "products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8ggb-q1xf1cwr.jpg",
+      "file": "images/products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8ggb-q1xf1cwr.jpg",
+      "bytes": 2835592,
+      "sha256": "8f567f94168ab05bf79d972102981ba527aabf2c3c2e7b4bd7b604312c063edd",
+      "content_type": "image/jpeg"
+    },
+    {
+      "storage_path": "products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8gym-dqfn3lxl.jpg",
+      "file": "images/products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8gym-dqfn3lxl.jpg",
+      "bytes": 2914771,
+      "sha256": "cccda3f7b911c5276d6bf336ad0013a208ddf7e2233dae44754fcfdace469b12",
+      "content_type": "image/jpeg"
+    },
+    {
+      "storage_path": "products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2js2-2stkt26d.png",
+      "file": "images/products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2js2-2stkt26d.png",
+      "bytes": 1696268,
+      "sha256": "54e98b1a52b47975db7c2debbf92e837d2e4fbb4bac7b64ff72f61ed302aab59",
+      "content_type": "image/png"
+    },
+    {
+      "storage_path": "products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2kgr-ya7jbiqj.png",
+      "file": "images/products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2kgr-ya7jbiqj.png",
+      "bytes": 1914378,
+      "sha256": "137c31d767d933472046a64808cc638fbf12343979f42ee6e9c8159acfb1116f",
+      "content_type": "image/png"
+    },
+    {
+      "storage_path": "products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2l4p-o2fitdza.png",
+      "file": "images/products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2l4p-o2fitdza.png",
+      "bytes": 3028902,
+      "sha256": "7feb8aeb269ff8b9241452a5c1f3cacc01eaca04cda63c468eefd06e66cbd1d6",
+      "content_type": "image/png"
+    },
+    {
+      "storage_path": "products/b289320d-7712-4f6d-bd05-bfb4a316eb52/mvpgqi6z-jgdnnim4.png",
+      "file": "images/products/b289320d-7712-4f6d-bd05-bfb4a316eb52/mvpgqi6z-jgdnnim4.png",
+      "bytes": 2251616,
+      "sha256": "b7f23b90a062dfe3ca7b0b0cd758ca94a682d629b90bef2efcdf821e29b0eca0",
+      "content_type": "image/png"
+    },
+    {
+      "storage_path": "products/b289320d-7712-4f6d-bd05-bfb4a316eb52/mvpgqjxx-8narohov.png",
+      "file": "images/products/b289320d-7712-4f6d-bd05-bfb4a316eb52/mvpgqjxx-8narohov.png",
+      "bytes": 2205374,
+      "sha256": "c99d906a2310c9a467aa7e419d2b1d44e11e6da2a5671571168fac943b8d2981",
+      "content_type": "image/png"
+    },
+    {
+      "storage_path": "products/e4d42e85-e949-4e57-907c-11fb49a50c76/mvpbq9jf-gwd0t0q7.png",
+      "file": "images/products/e4d42e85-e949-4e57-907c-11fb49a50c76/mvpbq9jf-gwd0t0q7.png",
+      "bytes": 2721534,
+      "sha256": "b5f29362ee7456e951449cbac45d7ae322af58c1d08d1e101f8ad39591ec8acb",
+      "content_type": "image/png"
+    },
+    {
+      "storage_path": "products/e4d42e85-e949-4e57-907c-11fb49a50c76/mvpbqabp-cc4ew5zb.png",
+      "file": "images/products/e4d42e85-e949-4e57-907c-11fb49a50c76/mvpbqabp-cc4ew5zb.png",
+      "bytes": 2086289,
+      "sha256": "d8273940f1d4019e8e386121c529ba1a6a94da6f56ef6b6ff707423dd285d061",
+      "content_type": "image/png"
+    }
+  ],
+  "catalog_sha256": "b69828a04831f48814c83aa76bc900bb549df2c1bc9eaf046ea60314a278d1f2"
+}

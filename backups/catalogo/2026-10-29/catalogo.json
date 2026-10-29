@@ -1,0 +1,215 @@
+{
+  "scope": "public_storefront_only",
+  "project": "Francine Furini Store",
+  "products": [
+    {
+      "id": "e4d42e85-e949-4e57-907c-11fb49a50c76",
+      "name": "Blusa Ticiane",
+      "slug": "blusa-ticiane",
+      "fabric": "Jeans",
+      "featured": false,
+      "category_id": "0e6cfa56-304d-464d-9ec2-1b5ba6225416",
+      "description": "Blusa Jeans Peplum com Fechamento Oriental 💙\n\nBlusa jeans azul-claro, sem mangas, com gola alta estruturada e modelagem peplum, que valoriza a cintura e proporciona um caimento elegante. Possui fechamento frontal com delicados botões estilo oriental em preto, trazendo charme, sofisticação e um toque moderno à peça. Ideal para compor looks estilosos e cheios de personalidade.",
+      "price_cents": 21900,
+      "published_at": null,
+      "previous_slugs": [
+        "teste-dominio-oficial"
+      ],
+      "product_images": [
+        {
+          "alt_text": null,
+          "sort_order": 0,
+          "storage_path": "products/e4d42e85-e949-4e57-907c-11fb49a50c76/mvpbq9jf-gwd0t0q7.png"
+        },
+        {
+          "alt_text": null,
+          "sort_order": 1,
+          "storage_path": "products/e4d42e85-e949-4e57-907c-11fb49a50c76/mvpbqabp-cc4ew5zb.png"
+        }
+      ],
+      "product_variants": [
+        {
+          "id": "658335e5-19d4-4bbe-a9f4-0b6a11cbfecc",
+          "size": "M",
+          "color": "Jeans",
+          "active": true,
+          "quantity": 1
+        }
+      ],
+      "compare_at_price_cents": null
+    },
+    {
+      "id": "673eafb1-e839-45dd-9c61-343a0d80fedf",
+      "name": "Camisa Beth",
+      "slug": "camisa-beth",
+      "fabric": "Tricoline",
+      "featured": false,
+      "category_id": "da2278a2-1af1-4250-a122-f1e83509dc8e",
+      "description": "Camisa Feminina em Tricoline\n\nConfeccionada em tricoline, tecido conhecido pelo toque macio, leveza e ótimo caimento. Possui acabamento elegante, estrutura que valoriza a peça e mangas amplas com punhos alongados. Versátil e atemporal, perfeita para compor looks sofisticados ou casuais com muito estilo.",
+      "price_cents": 12999,
+      "published_at": null,
+      "previous_slugs": [],
+      "product_images": [
+        {
+          "alt_text": null,
+          "sort_order": 0,
+          "storage_path": "products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2js2-2stkt26d.png"
+        },
+        {
+          "alt_text": null,
+          "sort_order": 1,
+          "storage_path": "products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2kgr-ya7jbiqj.png"
+        },
+        {
+          "alt_text": null,
+          "sort_order": 2,
+          "storage_path": "products/673eafb1-e839-45dd-9c61-343a0d80fedf/mvrc2l4p-o2fitdza.png"
+        }
+      ],
+      "product_variants": [
+        {
+          "id": "b3684325-02c6-4dfb-bc1a-bc9c8fbf38d7",
+          "size": "TAM ÚNICO",
+          "color": "Marrom",
+          "active": true,
+          "quantity": 1
+        },
+        {
+          "id": "8c14c09d-2565-4eeb-804f-da7d5de612f3",
+          "size": "TAM ÚNICO",
+          "color": "Preta",
+          "active": true,
+          "quantity": 1
+        }
+      ],
+      "compare_at_price_cents": null
+    },
+    {
+      "id": "318d26ec-e9f4-482e-91f2-8789e18baa97",
+      "name": "Conjunto Capri",
+      "slug": "conjunto-capri",
+      "fabric": "Alfaitaria Marrant",
+      "featured": false,
+      "category_id": "e8ecd7eb-f264-4b9e-915b-e84b086a88ca",
+      "description": "Conjunto Risca de Giz – Blusa Assimétrica + Calça Pantalona\n\nConjunto elegante e moderno, composto por blusa tomara que caia com modelagem assimétrica e calça pantalona de caimento fluido. Confeccionado em tecido branco com listras finas verticais, que alongam a silhueta e trazem sofisticação ao look. Uma proposta versátil e atemporal, perfeita para produções elegantes e cheias de personalidade.",
+      "price_cents": 22999,
+      "published_at": null,
+      "previous_slugs": [],
+      "product_images": [
+        {
+          "alt_text": null,
+          "sort_order": 0,
+          "storage_path": "products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8g0m-wh1cjffd.jpg"
+        },
+        {
+          "alt_text": null,
+          "sort_order": 1,
+          "storage_path": "products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8ggb-q1xf1cwr.jpg"
+        },
+        {
+          "alt_text": null,
+          "sort_order": 2,
+          "storage_path": "products/318d26ec-e9f4-482e-91f2-8789e18baa97/mvpb8gym-dqfn3lxl.jpg"
+        }
+      ],
+      "product_variants": [
+        {
+          "id": "a0cb122e-bbc7-4a6a-b297-0af53c7a0acf",
+          "size": "M 40",
+          "color": "OFF WHITE",
+          "active": true,
+          "quantity": 2
+        }
+      ],
+      "compare_at_price_cents": null
+    },
+    {
+      "id": "b289320d-7712-4f6d-bd05-bfb4a316eb52",
+      "name": "SAIA CELINA",
+      "slug": "saia-celina",
+      "fabric": "Linho misto",
+      "featured": false,
+      "category_id": "d443e419-95b8-4f48-a68d-7d674dc8d8e3",
+      "description": "Saia midi em tom azul-claro, com cós largo e modelagem evasê, que proporciona um caimento leve e fluido. Possui recorte com franzidos delicados, pences que valorizam o ajuste na cintura e forro interno, garantindo mais conforto e segurança ao vestir. Uma peça feminina, elegante e versátil para diversas ocasiões.",
+      "price_cents": 15990,
+      "published_at": null,
+      "previous_slugs": [
+        "vestido-aurora-teste"
+      ],
+      "product_images": [
+        {
+          "alt_text": null,
+          "sort_order": 0,
+          "storage_path": "products/b289320d-7712-4f6d-bd05-bfb4a316eb52/mvpgqi6z-jgdnnim4.png"
+        },
+        {
+          "alt_text": null,
+          "sort_order": 1,
+          "storage_path": "products/b289320d-7712-4f6d-bd05-bfb4a316eb52/mvpgqjxx-8narohov.png"
+        }
+      ],
+      "product_variants": [
+        {
+          "id": "23737d92-c9af-4323-9e28-b42a26188a4f",
+          "size": "M",
+          "color": "Bege",
+          "active": true,
+          "quantity": 1
+        },
+        {
+          "id": "46af60fd-3ebd-415a-a66c-8cfefd2f7310",
+          "size": "P 36/38, G/ 40",
+          "color": "off WHITE",
+          "active": true,
+          "quantity": 1
+        }
+      ],
+      "compare_at_price_cents": null
+    }
+  ],
+  "categories": [
+    {
+      "id": "da2278a2-1af1-4250-a122-f1e83509dc8e",
+      "name": "Camisas",
+      "slug": "camisas",
+      "sort_order": 1
+    },
+    {
+      "id": "e8ecd7eb-f264-4b9e-915b-e84b086a88ca",
+      "name": "Conjuntos",
+      "slug": "conjuntos",
+      "sort_order": 2
+    },
+    {
+      "id": "2fddedfc-bca4-492f-aa3a-f28c54089feb",
+      "name": "Calças Jeans",
+      "slug": "calcas-jeans",
+      "sort_order": 3
+    },
+    {
+      "id": "7a6cb976-3da5-41db-b22f-7e8e03e36d44",
+      "name": "Shorts",
+      "slug": "shorts",
+      "sort_order": 4
+    },
+    {
+      "id": "0e6cfa56-304d-464d-9ec2-1b5ba6225416",
+      "name": "Blusas",
+      "slug": "blusas",
+      "sort_order": 5
+    },
+    {
+      "id": "21d2f574-09ce-4ae0-9ab8-2563562534ea",
+      "name": "Vestidos",
+      "slug": "vestidos",
+      "sort_order": 6
+    },
+    {
+      "id": "d443e419-95b8-4f48-a68d-7d674dc8d8e3",
+      "name": "Saias",
+      "slug": "saias",
+      "sort_order": 70
+    }
+  ],
+  "captured_at": "2026-10-29T17:41:40.530668+00:00"
+}
