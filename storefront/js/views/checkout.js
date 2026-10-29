@@ -1,3 +1,4 @@
+import { attemptStore } from "../lib/attempts.js";
 import { h, setChildren } from "../lib/dom.js";
 import { formatBRL, formatCep, formatPhone } from "../lib/format.js";
 import { subtotalCents } from "../lib/cart.js";
@@ -12,11 +13,15 @@ export function checkoutView(ctx) {
 
   const place = createOrderPlacer({
     cartStore: ctx.cart,
+    attempts: attemptStore({ getItem:k=>globalThis.localStorage?.getItem(k)??null, setItem:(k,v)=>{if(!globalThis.localStorage) throw new Error("storage");localStorage.setItem(k,v);}, removeItem:k=>globalThis.localStorage?.removeItem(k) }, "ff:order-attempt"),
     send: (payload) => postOrder({ fetchFn: (u, i) => fetch(u, i), url: ctx.cfg.createOrderUrl, payload }),
   });
 
-  const start = ctx.cart.get().items.length ? ctx.refreshCart().then((c) => { changes = c; }, () => {}) : Promise.resolve();
-  start.then(draw);
+  const start = place.recover().then(result=> {
+    if(result?.ok) { ctx.setOrder(result.order); ctx.navigate("#/pedido"); return false; }
+    return true;
+  }).then(keep=>keep && ctx.cart.get().items.length ? ctx.refreshCart().then((c) => { changes = c; }, () => {}) : Promise.resolve());
+  start.then(()=> { if(ctx.order?.display_code) return; draw(); });
 
   function draw(banner, saved) {
     const state = ctx.cart.get();
@@ -59,13 +64,22 @@ export function checkoutView(ctx) {
 
     if (saved) for (const [k, v] of Object.entries(saved)) if (form.elements[k]) form.elements[k].value = v;
     form.elements.phone.addEventListener("blur", (e) => { e.target.value = formatPhone(e.target.value); });
+    function clearValidErrors() {
+      const errors=validateCustomer(Object.fromEntries(new FormData(form))).errors;
+      for(const el of form.elements) if(el.name && !errors[el.name]) {
+        const message=form.querySelector(`#e-${el.name}`); if(message) message.textContent="";
+        el.removeAttribute("aria-invalid");
+      }
+    }
+    form.addEventListener("input",clearValidErrors);
+    form.addEventListener("change",clearValidErrors);
     // ViaCEP: preenche rua/bairro/cidade/UF ao completar 8 dígitos; nunca sobrescreve o que a cliente digitou.
     const cepStatus = form.querySelector("#cep-status");
     const cep = createCepController({
       lookup: ctx.lookupCep ?? ((c, o) => lookupCep(c, o)),
-      onStatus: (k) => { cepStatus.textContent = k ? CEP_MESSAGES[k] : ""; cepStatus.dataset.kind = k ?? ""; if (k) form.elements.postal_code.removeAttribute("aria-invalid"); },
+      onStatus: (k) => { clearValidErrors(); cepStatus.textContent = k ? CEP_MESSAGES[k] : ""; cepStatus.dataset.kind = k ?? ""; if (k) form.elements.postal_code.removeAttribute("aria-invalid"); },
       read: (k) => form.elements[k]?.value ?? "",
-      fill: (addr) => { for (const [k, v] of Object.entries(addr)) if (form.elements[k]) form.elements[k].value = v; },
+      fill: (addr) => { for (const [k, v] of Object.entries(addr)) if (form.elements[k]) form.elements[k].value = v; clearValidErrors(); },
       clear: (keys) => { for (const k of keys) if (form.elements[k]) form.elements[k].value = ""; },
     });
     // Valores já presentes (ex.: formulário redesenhado após ajuste de estoque) pertencem à cliente: nunca são sobrescritos.

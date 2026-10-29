@@ -19,7 +19,7 @@
 2. Digite o **login** e a **senha** que você recebeu e toque em **Entrar**.
 3. Para sair, toque em **Sair** (canto superior direito). Faça isso sempre que usar um aparelho que não é só seu.
 
-No topo ficam os atalhos: **Painel**, **Pedidos**, **Produtos** e **Categorias**.
+No topo ficam os atalhos: **Painel**, **Pedidos**, **Venda Rápida**, **Produtos** e **Categorias**.
 
 **Se aparecer “Sua sessão expirou”:** é normal depois de algum tempo parada. Entre de novo.
 **Se aparecer “Acesso negado”:** o usuário usado não tem permissão. Toque em **Sair** e fale com o suporte.
@@ -128,12 +128,13 @@ Repita para cada cor e tamanho. A mesma combinação não pode ser cadastrada du
 
 O estoque é o número em **Quantidade em estoque**, em cada variante. Na listagem, o total considera apenas as variantes ativas; uma variante desativada pode ter quantidade registrada sem entrar nesse total.
 
-- Para **atualizar**, mude o número e toque em **Salvar**.
+- Para **atualizar**, abra **Ajustar estoque**, informe o **Novo saldo**, preencha o **Motivo** e toque em **Salvar ajuste**.
+- Salvar cor, tamanho ou SKU não altera a quantidade. Se o saldo tiver mudado durante uma venda, reabra o produto antes de ajustar.
 - **Estoque baixo** (2 ou menos) e **Esgotada** (0) aparecem como etiquetas.
 - Peça esgotada continua visível na loja, marcada como **esgotada**, e não pode ser comprada.
 
-> **Importante:** alterar o número aqui é um **ajuste manual** (ex.: chegou mercadoria, ou você vendeu na loja física).
-> Quando uma cliente envia uma solicitação, o estoque **não muda**. Ele só diminui quando **você conclui a venda** (capítulo 12).
+> **Importante:** use ajuste manual para entrada, correção ou devolução. Para uma venda na loja física, Instagram ou WhatsApp, use **Venda Rápida**.
+> Quando uma cliente envia uma solicitação, o estoque **não muda**. Ele diminui quando **você conclui a venda** (capítulo 12) ou confirma uma **Venda Rápida**.
 
 ---
 
@@ -273,3 +274,28 @@ O pedido fica **Cancelado** e o **estoque não muda** (porque ainda não tinha b
 - [ ] Cores e tamanhos cadastrados, com a quantidade certa
 - [ ] **Ativo** marcado → *Publicar na loja agora?* → confirmar
 - [ ] Abrir a loja no celular e olhar o produto
+
+
+---
+
+## Venda Rápida — vendas fora do site
+
+Use somente para peças **já vendidas e com pagamento confirmado** pelo WhatsApp, Instagram ou presencialmente. Pedidos criados na loja continuam sendo concluídos normalmente na aba **Pedidos** — não registre a mesma venda nos dois lugares.
+
+1. Abra **Venda Rápida** no menu do painel.
+2. Busque a peça pelo nome; confira **cor**, **tamanho** e **quantidade disponível**.
+3. Toque em **Vendi 1** para incluir uma unidade no resumo. Para vender mais peças, repita ou use **+** e **−**.
+4. Selecione onde vendeu: WhatsApp, Instagram, Presencial ou Outro.
+5. Confira tudo e toque em **Confirmar venda**. A baixa só acontece após confirmar no aviso.
+6. Veja a confirmação e o registro em **Últimas vendas externas**.
+
+**Atenção:** o sistema não aceita estoque insuficiente e protege contra baixas duplicadas da mesma tentativa. Se a conexão cair após confirmar, **confira o histórico antes de registrar outra venda**. Esta primeira versão não faz estorno automático; se registrou algo incorreto, procure a TaskZap antes de ajustar o estoque.
+
+### Tentativas pendentes e histórico
+Se uma confirmação de Venda Rápida falhar, reabra a aba e use **Conferir e retomar tentativa**. O painel recupera a operação anterior antes de permitir uma nova venda. Não apague dados do navegador para reenviar uma tentativa incerta; procure o suporte se não conseguir retomar.
+
+Em **Pedidos**, use **Buscar** por nome ou código e os botões **Anteriores** e **Próximos**. As vendas externas também têm navegação pelo histórico.
+
+Use **Salvar observação** para guardar uma anotação interna sem mudar o status do pedido, inclusive depois de concluído ou cancelado. Confira o histórico antes de sair da tela.
+
+O checkout retoma a identificação da tentativa se a conexão cair. O pagamento continua combinado manualmente com a cliente.

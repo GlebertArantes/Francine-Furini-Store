@@ -1,3 +1,4 @@
+import { attemptLock } from "./attempts.js";
 // Regras do checkout V1. Validação aqui é só conveniência: o servidor revalida tudo.
 import { formatBRL, formatCep, formatPhone, normalizePhone, onlyDigits } from "./format.js";
 import { subtotalCents, toOrderItems } from "./cart.js";
@@ -53,6 +54,8 @@ export const ERROR_MESSAGES = {
   invalid_request: "Não foi possível processar o pedido. Confira os dados e tente novamente.",
   payload_too_large: "Os dados enviados ficaram grandes demais. Reduza a observação e tente de novo.",
   network: "Não conseguimos conectar. Verifique sua internet e tente novamente. Se tiver dúvida se o pedido chegou a ser enviado, fale com a Francine pelo WhatsApp antes de reenviar, para evitar pedido duplicado.",
+  request_conflict: "Há uma tentativa pendente com outros dados. Retome o pedido anterior ou fale com a Francine antes de criar outro.",
+  storage: "Não foi possível guardar sua tentativa com segurança. Habilite o armazenamento e use um navegador atualizado.",
   generic: "Não foi possível enviar seu pedido agora. Tente novamente em instantes ou fale com a Francine pelo WhatsApp.",
 };
 
@@ -79,7 +82,7 @@ export async function postOrder({ fetchFn, url, payload }) {
     return { ok: true, order: { order_id: body.order_id, display_code: body.display_code, status: body.status } };
   }
   const code = body?.error && ERROR_MESSAGES[body.error] ? body.error : "generic";
-  return { ok: false, code, message: errorMessage(code) };
+  return { ok: false, code, message: errorMessage(code), notFound: body?.error === "not_found", definitive: [400,409].includes(res.status) && code !== "request_conflict" };
 }
 
 /** Impede submissões simultâneas: chamadas durante uma em andamento são ignoradas. */
@@ -98,16 +101,47 @@ export function singleFlight(fn) {
  * Fluxo completo: valida -> monta payload -> envia (single-flight) -> limpa carrinho no sucesso.
  * Em erro, o carrinho permanece (e o chamador reconcilia se `needsCartRefresh`).
  */
-export function createOrderPlacer({ cartStore, send }) {
-  return singleFlight(async (rawCustomer) => {
+export function createOrderPlacer({ cartStore, send, attempts, lock = attemptLock }) {
+  // Sem `attempts`: adaptador em memória apenas para chamadas de teste antigas.
+  let memory=null;
+  const store=attempts ?? {read:()=>memory,write:v=>{memory=v;},clear:()=>{memory=null;}};
+  const run=attempts ? (fn)=>lock("ff:order-attempt",fn) : (fn)=>fn();
+  const digest=async(value)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(value))))).map(x=>x.toString(16).padStart(2,"0")).join("");
+  const finish=(r)=>{ if(r.ok){ store.clear(); cartStore.clear(); } return r; };
+  const recover=async()=> {
+    const old=store.read();
+    if (!old) return null;
+    return send({request_id:old.id,recover:true});
+  };
+  const place=singleFlight(async (rawCustomer) => {
     const v = validateCustomer(rawCustomer);
     if (!v.ok) return { ok: false, code: "validation", errors: v.errors };
-    const cart = cartStore.get();
-    if (cart.items.length === 0) return { ok: false, code: "empty_cart", message: "Seu carrinho está vazio." };
-    const result = await send(buildOrderPayload(v.value, cart));
-    if (result.ok) cartStore.clear();
-    return result;
+    try { return await run(async()=> {
+      const old=store.read();
+      if (old && attempts) {
+        const recovered=await recover();
+        if(recovered.ok) return finish(recovered);
+        if(!recovered.notFound) return recovered; // resultado ainda incerto
+      }
+      const cart = cartStore.get();
+      if (cart.items.length === 0) return { ok: false, code: "empty_cart", message: "Seu carrinho está vazio." };
+      const payload=buildOrderPayload(v.value, cart);
+      payload.items.sort((a,b)=>a.variant_id.localeCompare(b.variant_id));
+      const fingerprint=await digest(payload);
+      if(old && old.fingerprint!==fingerprint) return {ok:false,code:"request_conflict",message:errorMessage("request_conflict")};
+      const attempt=old ?? {id:crypto.randomUUID(),fingerprint};
+      store.write(attempt); // hash irreversível; nenhum dado pessoal persistido
+      const result = await send({...payload,request_id:attempt.id});
+      if (result.definitive) store.clear();
+      return finish(result);
+    }); } catch { return {ok:false,code:"storage",message:errorMessage("storage")}; }
   });
+  place.recover=async()=> {
+    if(!attempts) return null;
+    try { return await run(async()=>{ const r=await recover(); return r?.ok ? finish(r):r; }); }
+    catch { return {ok:false,code:"storage",message:errorMessage("storage")}; }
+  };
+  return place;
 }
 
 /**
