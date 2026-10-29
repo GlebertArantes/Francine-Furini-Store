@@ -61,7 +61,7 @@ test("carrinho vazio e checkout vazio não mostram 'null' (aviso de mudanças au
   const { cartView } = await import("../../storefront/js/views/cart.js");
   const { checkoutView } = await import("../../storefront/js/views/checkout.js");
   const cart = cartView(ctxFor([product()], []));
-  const checkout = checkoutView(ctxFor([product()], []));
+  const checkout = checkoutView({...ctxFor([product()], []),order:{display_code:"FF-ANTERIOR"}});
   await flush();
   assert.match(textOf(cart), /vazio/i);
   assert.match(textOf(checkout), /vazio/i);

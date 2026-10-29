@@ -243,3 +243,17 @@ test("Edge Function não registra payload, PII nem chaves em logs", () => {
     for (const m of src.matchAll(/console\.warn\(([^;]*)\);/g)) assert.ok(!/serviceRoleKey|SERVICE_ROLE|body|payload|customer|phone/i.test(m[1]), `${f}: warn sem dados sensíveis`);
   }
 });
+
+test("handler: ID persistente seleciona RPC idempotente e recuperação não retorna dados pessoais", async()=>{
+ const id='80000000-0000-0000-0000-000000000001';
+ const {handler,calls}=mk(()=>Response.json({order_id:'o',display_code:'FF-1',status:'pending_shipping',customer_phone:'private'}));
+ assert.equal((await handler(post({...good(),request_id:id}))).status,201);
+ assert.match(calls[0].url,/create_order_request_idempotent$/);assert.equal(JSON.parse(calls[0].init.body).p_request_id,id);
+ const r=await handler(post({request_id:id,recover:true}));assert.match(calls[1].url,/recover_order_request$/);
+ assert.deepEqual(await r.json(),{order_id:'o',display_code:'FF-1',status:'pending_shipping'});
+ assert.equal((await handler(post({...good(),request_id:'bad'}))).status,400);
+});
+test("handler: erro JSON null, array ou texto mantém contrato JSON/CORS",async()=>{
+ for(const body of [null,[],"erro"]){const {handler}=mk(()=>Response.json(body,{status:400}));const r=await handler(post(good()));assert.equal(r.status,500);assert.equal(r.headers.get('access-control-allow-origin'),'https://loja.example');assert.deepEqual(await r.json(),{error:'internal_error'});}
+ const {handler}=mk(()=>Response.json(null));assert.equal((await handler(post({request_id:'80000000-0000-0000-0000-000000000001',recover:true}))).status,404);
+});

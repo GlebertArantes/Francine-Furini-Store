@@ -38,7 +38,7 @@ export function createApi(config, fetchFn = fetch) {
     },
     async getProducts() {
       const rows = await get(
-        "products?select=id,category_id,name,slug,description,fabric,price_cents,compare_at_price_cents,featured,published_at," +
+        "products?select=id,category_id,name,slug,previous_slugs,description,fabric,price_cents,compare_at_price_cents,featured,published_at," +
           "product_variants(id,color,size,quantity,active),product_images(storage_path,alt_text,sort_order)" +
           "&order=featured.desc,published_at.desc.nullslast,name.asc"
       );
@@ -49,6 +49,7 @@ export function createApi(config, fetchFn = fetch) {
 
 export function normalizeProduct(row) {
   return {
+    previous_slugs: row.previous_slugs ?? [],
     id: row.id, category_id: row.category_id, name: row.name, slug: row.slug,
     description: row.description ?? "", fabric: row.fabric ?? "",
     price_cents: row.price_cents, compare_at_price_cents: row.compare_at_price_cents ?? null,

@@ -9,7 +9,7 @@ export function productView(ctx, slug) {
   ctx.load().then(render, () => root.replaceChildren(stateBlock("Não foi possível carregar a peça", "Verifique sua conexão e tente novamente.", h("a", { class: "btn secondary", href: "#/" }, "Voltar à loja"))));
 
   function render() {
-    const p = ctx.products.find((x) => x.slug === slug);
+    const p = ctx.products.find((x) => x.slug === slug || x.previous_slugs?.includes(slug));
     if (!p) { root.replaceChildren(stateBlock("Peça não encontrada", "Ela pode ter saído da coleção.", h("a", { class: "btn secondary", href: "#/" }, "Voltar à loja"))); return; }
     document.title = `${p.name} — ${ctx.settings.store_name || "Francine Furini Store"}`;
 

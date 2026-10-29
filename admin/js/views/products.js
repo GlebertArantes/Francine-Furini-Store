@@ -98,6 +98,7 @@ function productForm(ctx, categories, p, redraw, photos) {
   const pub = h("input", { name: "published_at", type: "datetime-local", value: isoToLocalInput(p?.published_at) });
   const featured = h("input", { name: "featured", type: "checkbox", checked: !!p?.featured });
   // Produto novo nasce OCULTO (rascunho): publicar é decisão explícita.
+  if (v) qty.disabled = true;
   const active = h("input", { name: "active", type: "checkbox", checked: p ? p.active : NEW_PRODUCT_DEFAULTS.active });
   const vis = h("div", { class: "vis", role: "status", "aria-live": "polite" });
   const updateVis = () => {
@@ -166,7 +167,7 @@ function variantsSection(ctx, p, redraw) {
   const rows = [...(p.product_variants ?? [])].sort((a, b) => a.color.localeCompare(b.color, "pt-BR") || a.size.localeCompare(b.size, "pt-BR", { numeric: true }));
   return h("section", { class: "panel" },
     h("h2", {}, "Variantes e estoque"),
-    h("p", { class: "notice" }, "Alterar a quantidade aqui é um ", h("strong", {}, "ajuste manual de estoque"), ". As vendas só baixam o estoque quando você conclui o pedido."),
+    h("p", { class: "notice" }, "Salvar cor ou tamanho não altera o saldo. Use Ajustar estoque para entrada, correção ou devolução. As vendas baixam ao concluir o pedido ou confirmar a Venda Rápida."),
     h("ul", { class: "rows" }, rows.map((v) => variantRow(ctx, p, v, redraw)), variantRow(ctx, p, null, redraw)));
 }
 
@@ -199,6 +200,26 @@ function variantRow(ctx, p, v, redraw) {
   form.addEventListener("submit", (e) => { e.preventDefault(); save(); });
   const li = h("li", { class: v ? "" : "new" }, form);
   if (v) {
+    const reason = h("input", { placeholder: "Ex.: entrada de mercadoria", maxlength: 300, "aria-label": "Motivo do ajuste de estoque" });
+    const next = h("input", { value: String(v.quantity), inputmode: "numeric", "aria-label": "Novo saldo" });
+    let attempt = null;
+    const adjust = h("button", { type: "button", class: "btn small secondary" }, "Salvar ajuste");
+    adjust.addEventListener("click", guard(adjust, async () => {
+      const quantity = Number(next.value);
+      if (!/^\d+$/.test(next.value) || !Number.isInteger(quantity) || quantity > 1000000 || reason.value.trim().length < 3) { err.textContent = "Informe um saldo inteiro e o motivo do ajuste (mínimo 3 letras)."; return; }
+      const key = JSON.stringify([quantity,reason.value.trim()]);
+      if (attempt && attempt.key !== key) { err.textContent = "Confira o saldo atualizado antes de alterar uma tentativa com resultado incerto."; return; }
+      if (!(await confirmDialog({ title: "Ajustar estoque?", text: `Saldo: ${v.quantity} → ${quantity}. Motivo: ${reason.value.trim()}`, confirmLabel: "Salvar ajuste" }))) return;
+      attempt ??= { key, id: crypto.randomUUID() };
+      try {
+        await ctx.api.adjustStock({ p_request_id: attempt.id, p_variant_id:v.id, p_expected_version:v.stock_version, p_quantity:quantity, p_reason:reason.value.trim() });
+        toast("Estoque ajustado e motivo registrado."); redraw();
+      } catch (e) {
+        if (ctx.fail(e)) return;
+        err.textContent = /stock_conflict/.test(e.message) ? "O estoque mudou desde que abriu esta tela. Reabra o produto para conferir o saldo antes de ajustar." : "Não foi possível confirmar o ajuste. Confira o saldo antes de tentar novamente.";
+      }
+    }));
+    li.append(h("details", { class: "panel" }, h("summary", {}, "Ajustar estoque"), mini("Novo saldo",next), mini("Motivo",reason),adjust));
     const delBtn = h("button", { type: "button", class: "link-btn danger" }, "Remover");
     const del = guard(delBtn, async () => {
       if (!(await confirmDialog({ title: "Remover variante?", text: `${v.color} · ${v.size} será removida do produto. Se já apareceu em pedidos, o banco não permite remover: desative-a.`, confirmLabel: "Remover", danger: true }))) return;

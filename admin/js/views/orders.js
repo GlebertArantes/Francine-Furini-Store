@@ -9,8 +9,13 @@ const pill = (s) => h("span", { class: `pill st-${s}` }, STATUS_LABEL[s] ?? s);
 export function ordersListView(ctx, query) {
   const root = h("div", { class: "page" });
   const status = query.get("status") ?? "";
-  loadInto(ctx, root, () => ctx.api.listOrders(status), (orders) => {
-    root.replaceChildren(h("h1", {}, "Pedidos"),
+  const page = Math.max(0,Number(query.get("pagina"))||0);
+  const search = query.get("busca") ?? "";
+  const listUrl=(n)=>`#/pedidos?${new URLSearchParams({status,pagina:String(n),busca:search})}`;
+  const input=h("input",{type:"search",value:search,placeholder:"Nome ou código do pedido","aria-label":"Buscar pedidos"});
+  const searchForm=h("form",{class:"toolbar",onsubmit:e=>{e.preventDefault();ctx.navigate(`#/pedidos?${new URLSearchParams({status,busca:input.value})}`);}},input,h("button",{type:"submit",class:"btn secondary"},"Buscar"));
+  loadInto(ctx, root, () => ctx.api.listOrders(status,page,search), (orders) => {
+    root.replaceChildren(h("h1", {}, "Pedidos"),searchForm,
       h("div", { class: "toolbar" }, h("label", { class: "sr-only", for: "st" }, "Filtrar por status"),
         h("select", { id: "st", onchange: (e) => ctx.navigate(`#/pedidos${e.target.value ? `?status=${e.target.value}` : ""}`) },
           h("option", { value: "" }, "Todos os status"),
@@ -19,7 +24,9 @@ export function ordersListView(ctx, query) {
         h("div", {}, h("strong", {}, o.display_code), h("div", { class: "muted small" }, `${o.customer_name} · ${fmtDateTime(o.created_at)}`)),
         h("div", { class: "right" }, pill(o.status), h("span", {}, formatBRL(o.subtotal_cents)),
           hasShipping(o) ? h("span", { class: "muted small" }, `Frete ${formatBRL(o.shipping_cents)} · Total ${formatBRL(o.final_total_cents)}`) : h("span", { class: "muted small" }, "Frete a definir")))))
-        : stateBox("Nenhum pedido", status ? "Não há pedidos com este status." : "Os pedidos enviados pela loja aparecem aqui."));
+        : stateBox("Nenhum pedido", status ? "Não há pedidos com este status." : "Os pedidos enviados pela loja aparecem aqui."),
+      h("div",{class:"btn-row"},page ? h("a",{class:"btn secondary",href:listUrl(page-1)},"Anteriores") : null,
+        orders.length===50 ? h("a",{class:"btn secondary",href:listUrl(page+1)},"Próximos") : null));
   });
   return root;
 }
@@ -41,6 +48,16 @@ export function orderDetailView(ctx, id) {
     const waNumber = phone.length <= 11 ? `55${phone}` : phone;
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Olá! Sobre o seu pedido ${o.display_code} na Francine Furini Store.`)}`;
     const noteIn = h("input", { id: "note", maxlength: 500, placeholder: "Observação interna (opcional)" });
+    let noteAttempt = null;
+    const saveNote=h("button",{type:"button",class:"btn secondary"},"Salvar observação");
+    saveNote.addEventListener("click",guard(saveNote,async()=>{
+      const text=noteIn.value.trim();
+      if(!text) {toast("Digite a observação.","error");return;}
+      if(noteAttempt && noteAttempt.text!==text) {toast("Confira o histórico antes de alterar a tentativa anterior.","error");return;}
+      noteAttempt ??= {text,id:crypto.randomUUID()};
+      try {await ctx.api.rpc("admin_save_order_note",{p_order_id:o.id,p_note:text,p_request_id:noteAttempt.id});toast("Observação salva.");draw();}
+      catch(e){if(!ctx.fail(e))toast("Não foi possível confirmar. Confira o histórico ou tente novamente.","error");}
+    }));
     const shipIn = h("input", { id: "ship", inputmode: "decimal", placeholder: "0,00", value: o.shipping_cents != null ? centsToInput(o.shipping_cents) : "", "aria-describedby": "ship-help" });
     const msg = h("div", { "aria-live": "polite" });
     if (notice) msg.append(notice);
@@ -94,10 +111,10 @@ export function orderDetailView(ctx, id) {
           h("section", { class: "panel" }, h("h2", {}, "Histórico"),
             h("ol", { class: "timeline" }, history.map((x) => h("li", {}, h("strong", {}, STATUS_LABEL[x.to_status] ?? x.to_status), ` — ${fmtDateTime(x.created_at)}`, x.note ? h("div", { class: "muted small" }, x.note) : null))))),
         h("aside", { class: "panel sticky" }, h("h2", {}, "Ações"),
-          !act.setShipping && !act.cancel ? h("p", { class: "muted" }, o.status === "completed" ? "Venda concluída: o estoque já foi baixado. Nenhuma ação disponível." : "Pedido cancelado. Nenhuma ação disponível.") : [
+          h("div", { class:"field" }, h("label", {for:"note"}, "Observação interna"), noteIn, saveNote),
+          !act.setShipping && !act.cancel ? h("p", { class: "muted" }, o.status === "completed" ? "Venda concluída: o estoque já foi baixado. Você pode acrescentar uma observação ao histórico." : "Pedido cancelado. Você pode acrescentar uma observação ao histórico.") : [
             act.setShipping ? h("div", { class: "field" }, h("label", { for: "ship" }, "Frete (R$)"), shipIn,
               h("small", { id: "ship-help" }, "Calculado por você fora do sistema. R$ 0,00 é válido (frete grátis)."), shipBtn) : null,
-            h("div", { class: "field" }, h("label", { for: "note" }, "Observação interna"), noteIn),
             h("div", { class: "stack" },
               act.markContacted ? contactBtn : null,
               h("div", {}, completeBtn, !act.complete ? h("small", { class: "muted" }, " Defina o frete para concluir.") : null),

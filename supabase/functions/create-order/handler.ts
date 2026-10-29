@@ -31,6 +31,7 @@ const RPC_ERRORS: Record<string, [number, string]> = {
   insufficient_stock: [409, "insufficient_stock"],
   variant_unavailable: [409, "variant_unavailable"],
   rate_limited: [429, "rate_limited"],
+  request_conflict: [409, "request_conflict"],
 };
 
 export function createHandler(d: Deps) {
@@ -60,20 +61,25 @@ export function createHandler(d: Deps) {
     let body: unknown;
     try { body = JSON.parse(raw); } catch { return json(400, { error: "invalid_json" }); }
 
+    const b = body as Record<string, unknown> | null;
+    const requestId = b && typeof b === "object" ? b.request_id : undefined;
+    if (requestId !== undefined && (typeof requestId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId))) return json(400,{error:"invalid_request"});
+    const recover = b?.recover === true;
+    if (recover && !requestId) return json(400,{error:"invalid_request"});
     const v = validateOrderInput(body);
-    if (!v.ok) return json(400, { error: v.error });
+    if (!v.ok && !recover) return json(400, { error: v.error });
 
     // Falha de rede/indisponibilidade do banco: resposta JSON controlada (com CORS), sem detalhes internos.
     let res: Response;
     try {
-      res = await d.fetch(`${d.supabaseUrl}/rest/v1/rpc/create_order_request`, {
+      res = await d.fetch(`${d.supabaseUrl}/rest/v1/rpc/${recover ? "recover_order_request" : requestId ? "create_order_request_idempotent" : "create_order_request"}`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
           apikey: d.serviceRoleKey,
           authorization: `Bearer ${d.serviceRoleKey}`,
         },
-        body: JSON.stringify({ p_customer: v.value.customer, p_items: v.value.items }),
+        body: JSON.stringify(recover ? { p_request_id:requestId } : { ...(requestId ? {p_request_id:requestId}:{}), ...(v.ok ? {p_customer:v.value.customer,p_items:v.value.items} : {}) }),
       });
     } catch {
       return json(503, { error: "unavailable" });
@@ -81,12 +87,13 @@ export function createHandler(d: Deps) {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({} as Record<string, string>));
-      const key = Object.keys(RPC_ERRORS).find((k) => String(err.message ?? "").startsWith(k));
+      const key = Object.keys(RPC_ERRORS).find((k) => String(err?.message ?? "").startsWith(k));
       if (key) return json(RPC_ERRORS[key][0], { error: RPC_ERRORS[key][1] });
-      if (String(err.message ?? "").startsWith("invalid_")) return json(400, { error: "invalid_request" });
+      if (String(err?.message ?? "").startsWith("invalid_")) return json(400, { error: "invalid_request" });
       return json(500, { error: "internal_error" });
     }
     const out = await res.json().catch(() => null);
+    if (recover && !out) return json(404,{error:"not_found"});
     if (!out?.order_id || !out?.display_code) return json(502, { error: "unavailable" });
     // Resposta mínima: sem PII, sem dados internos.
     return json(201, { order_id: out.order_id, display_code: out.display_code, status: out.status });

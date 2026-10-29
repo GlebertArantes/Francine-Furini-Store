@@ -256,3 +256,19 @@ dialog.photo-editor::backdrop { background: rgba(30,24,20,.65); }
 .pv .pv-desc { margin: 0; font-size: .875rem; white-space: pre-line; }
 .pv .pv-dl { margin: 0; font-size: .8125rem; } .pv .pv-dl dt { font-size: .625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--taupe); } .pv .pv-dl dd { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .pv * { transition: none !important; } }
+
+/* Venda Rapida V1: foco em uso no celular */
+.quick-layout { display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(0, 1fr); gap:1rem; align-items:start; }
+.quick-results { max-height:32rem; overflow-y:auto; margin-top:1rem; }
+.quick-items { margin:.75rem 0; }
+.quick-line { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.8rem 0; border-bottom:1px solid var(--line); min-width:0; }
+.quick-line > div:first-child { min-width:0; overflow-wrap:anywhere; }
+.quick-line .btn { flex-shrink:0; }
+.quick-qty { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.quick-total { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:1rem 0; padding:1rem 0; border-top:1px solid var(--line); font-size:1.1rem; }
+@media(max-width:48rem) {
+  .quick-layout { grid-template-columns:1fr; }
+  .quick-results { max-height:20rem; }
+  .quick-line { align-items:flex-start; }
+  .quick-qty { justify-content:flex-end; }
+}

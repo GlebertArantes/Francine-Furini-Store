@@ -4,6 +4,7 @@ import { IMAGE_BUCKET, isOwnStoragePath, buildStoragePath, validateImageFile } f
 
 export class ApiError extends Error {
   constructor(status, body = {}) {
+    body = body && typeof body === "object" ? body : {};
     super(body.message ?? `http_${status}`);
     this.status = status; this.code = body.code; this.details = body.details; this.hint = body.hint;
   }
@@ -73,7 +74,12 @@ export function createAdminApi({ url, key, auth, fetchFn }) {
     updateProduct: (id, p) => one("PATCH", `products?id=eq.${enc(id)}`, p),
 
     createVariant: (productId, p) => one("POST", "product_variants", { ...p, product_id: productId }),
-    updateVariant: (id, p) => one("PATCH", `product_variants?id=eq.${enc(id)}`, p),
+    updateVariant: (id, p) => {
+      const { color, size, sku, active } = p;
+      return one("PATCH", `product_variants?id=eq.${enc(id)}`, { color, size, sku, active });
+    },
+    adjustStock: (args) => rpc("admin_adjust_stock", args),
+    getExternalSale: async (requestId) => (await json("GET", `external_sales?request_id=eq.${enc(requestId)}&select=id,total_cents&limit=1`))?.[0] ?? null,
     deleteVariant: (id) => json("DELETE", `product_variants?id=eq.${enc(id)}`),
 
     // Imagens: bucket fixo `product-images`.
@@ -102,8 +108,14 @@ export function createAdminApi({ url, key, auth, fetchFn }) {
     },
     previewUrl: (path) => `${url}/storage/v1/object/public/${IMAGE_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
 
+    // Venda Rapida: leitura administrativa; baixa SOMENTE via RPC atomica e idempotente.
+    listQuickSaleProducts: () => json("GET", "products?select=id,name,price_cents,active,product_variants(id,color,size,quantity,active)&order=name.asc"),
+    listExternalSales: (page=0) => json("GET", `external_sales?select=id,channel,total_cents,created_at,external_sale_items(product_name,color,size,quantity,line_total_cents)&order=created_at.desc&limit=30&offset=${Math.max(0,page)*30}`),
+    registerExternalSale: (requestId, channel, items) => rpc("admin_register_external_sale",
+      { p_request_id: requestId, p_channel: channel, p_items: items }),
+
     // Pedidos: leitura direta; escrita SOMENTE via RPC (ver orders.js).
-    listOrders: (status) => json("GET", `orders?select=id,display_code,status,customer_name,created_at,subtotal_cents,shipping_cents,final_total_cents${status ? `&status=eq.${enc(status)}` : ""}&order=created_at.desc&limit=200`),
+    listOrders: (status, page=0, search="") => json("GET", `orders?select=id,display_code,status,customer_name,created_at,subtotal_cents,shipping_cents,final_total_cents${status ? `&status=eq.${enc(status)}` : ""}${search ? `&or=(display_code.ilike.*${enc(search.replace(/[^\p{L}\p{N} -]/gu,""))}*,customer_name.ilike.*${enc(search.replace(/[^\p{L}\p{N} -]/gu,""))}*)` : ""}&order=created_at.desc,id.desc&limit=50&offset=${Math.max(0,page)*50}`),
     async getOrder(id) {
       const rows = await json("GET", `orders?id=eq.${enc(id)}&select=*,order_items(*),order_status_history(*)`);
       return rows?.[0] ?? null;
