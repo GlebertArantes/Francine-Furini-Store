@@ -25,16 +25,15 @@ export function quickSaleView(ctx) {
   function render({ products, sales }) {
     const lines = saleLines(products);
     let cart = [];
-    const search = h("input", { type: "search", placeholder: "Buscar peca, cor ou tamanho", "aria-label": "Buscar peca" });
+    const search = h("input", { type: "search", placeholder: "Buscar peça, cor ou tamanho", "aria-label": "Buscar peça" });
     const channel = h("select", { "aria-label": "Origem da venda" },
       CHANNELS.map((c) => h("option", { value: c.value }, c.label)));
     const results = h("div", { class: "quick-results" });
     const selection = h("div", { class: "quick-items" });
     const total = h("strong", {}, formatBRL(0));
     const note = h("p", { class: "muted small", role: "status", "aria-live": "polite" },
-      "O estoque so muda depois de confirmar a venda.");
+      "O estoque só muda depois de confirmar a venda.");
     const confirm = h("button", { type: "button", class: "btn", disabled: true }, "Confirmar venda");
-    const invalidate = () => {};
     const errToast = (code) => toast(code === "insufficient_stock"
       ? "Quantidade acima do estoque. Confira a peca." : "Nao foi possivel adicionar esta peca.", "error");
 
@@ -49,14 +48,14 @@ export function quickSaleView(ctx) {
           onclick: () => {
             const r = addSaleItem(cart, line);
             if (!r.ok) return errToast(r.code);
-            cart = r.cart; invalidate(); drawResults(); drawSelection();
+            cart = r.cart; drawResults(); drawSelection();
           } }, available ? "Vendi 1" : "Sem saldo");
         return h("div", { class: "quick-line" },
           h("div", {}, h("strong", {}, line.name),
             h("div", { class: "muted small" }, `${line.color} · ${line.size}${line.published ? "" : " · Produto oculto"}`),
             h("div", { class: "muted small" }, `${formatBRL(line.price_cents)} · ${available} disponivel(is)`)),
           btn);
-      }) : [stateBox("Nenhuma peca encontrada", "Confira a busca ou o estoque das variantes.")]));
+      }) : [stateBox("Nenhuma peça encontrada", "Confira a busca ou o estoque das variantes.")]));
     };
 
     const drawSelection = () => {
@@ -68,8 +67,8 @@ export function quickSaleView(ctx) {
           h("span", { "aria-label": `${line.quantity} peca(s)` }, String(line.quantity)),
           h("button", { type: "button", class: "btn small secondary", "aria-label": "Aumentar", disabled: line.quantity >= line.stock, onclick: () => setQty(line, line.quantity + 1) }, "+"),
           h("button", { type: "button", class: "link-btn danger", onclick: () => {
-            cart = removeSaleItem(cart, line.id); invalidate(); drawResults(); drawSelection();
-          } }, "Remover")))) : [h("p", { class: "muted" }, "Toque em Vendi 1 para selecionar a peca.")]));
+            cart = removeSaleItem(cart, line.id); drawResults(); drawSelection();
+          } }, "Remover")))) : [h("p", { class: "muted" }, "Toque em Vendi 1 para selecionar a peça.")]));
       total.textContent = formatBRL(saleTotal(cart));
       confirm.disabled = !!pending || cart.length === 0;
     };
@@ -81,10 +80,9 @@ export function quickSaleView(ctx) {
         if (!r.ok) return errToast(r.code);
         cart = r.cart;
       }
-      invalidate(); drawResults(); drawSelection();
+      drawResults(); drawSelection();
     };
     search.addEventListener("input", drawResults);
-    channel.addEventListener("change", invalidate);
     confirm.addEventListener("click", guard(confirm, async () => {
       const items = salePayload(cart);
       if (!items || !CHANNELS.some((c) => c.value === channel.value)) {
@@ -132,9 +130,9 @@ export function quickSaleView(ctx) {
           h("div", { class: "muted small" }, (s.external_sale_items ?? [])
             .map((i) => `${i.quantity}× ${i.product_name} (${i.color}/${i.size})`).join("; "))),
         h("strong", {}, formatBRL(s.total_cents)))) :
-        [h("p", { class: "muted" }, "Ainda nao ha vendas externas registradas.")]));
+        [h("p", { class: "muted" }, "Ainda não há vendas externas registradas.")]));
     root.replaceChildren(
-      h("div", { class: "page-head" }, h("h1", {}, "Venda Rapida"),
+      h("div", { class: "page-head" }, h("h1", {}, "Venda Rápida"),
         h("p", { class: "muted" }, "Para vendas feitas por fora do site.")),
       pendingNotice,
       h("fieldset", { class: "quick-layout", disabled:!!pending },

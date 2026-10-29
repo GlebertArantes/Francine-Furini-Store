@@ -10,6 +10,7 @@ import { stateBlock, loadingGrid } from "./common.js";
 export function checkoutView(ctx) {
   const root = h("div", { class: "wrap page" }, loadingGrid());
   let changes = [];
+  let recovered = false;
 
   const place = createOrderPlacer({
     cartStore: ctx.cart,
@@ -18,10 +19,10 @@ export function checkoutView(ctx) {
   });
 
   const start = place.recover().then(result=> {
-    if(result?.ok) { ctx.setOrder(result.order); ctx.navigate("#/pedido"); return false; }
+    if(result?.ok) { recovered=true; ctx.setOrder(result.order); ctx.navigate("#/pedido"); return false; }
     return true;
   }).then(keep=>keep && ctx.cart.get().items.length ? ctx.refreshCart().then((c) => { changes = c; }, () => {}) : Promise.resolve());
-  start.then(()=> { if(ctx.order?.display_code) return; draw(); });
+  start.then(()=> { if(recovered) return; draw(); });
 
   function draw(banner, saved) {
     const state = ctx.cart.get();
