@@ -218,6 +218,10 @@ h2 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); }
 .stepper button[disabled] { opacity: .35; cursor: not-allowed; }
 .stepper output { min-width: 2.5rem; display: grid; place-items: center; }
 .buy-row { display: grid; gap: 1rem; margin-top: 1.5rem; }
+.product-share { margin-top: 1rem; }
+.product-share .share-status { font-size: .8125rem; margin: .5rem 0; }
+.product-share .share-status:empty { display: none; }
+.product-share .share-url { width: 100%; font-size: .875rem; }
 
 /* Carrinho / checkout */
 .page { padding-block: 2rem 4rem; }

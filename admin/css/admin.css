@@ -85,6 +85,14 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--da
 .item { display: flex; justify-content: space-between; gap: 1rem; padding: .9rem 1rem; background: var(--paper); border: 1px solid var(--line); text-decoration: none; flex-wrap: wrap; align-items: center; }
 .item:hover { border-color: var(--taupe); }
 .item .right { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.item.product-item { display: block; padding: 0; }
+.product-item-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding: .9rem 1rem; text-decoration: none; }
+.product-item-main > div:first-child { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.product-link-actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: 1rem; }
+.product-link-actions .btn { min-height: 44px; }
+.product-link-actions > small { flex-basis: 100%; font-size: .8125rem; }
+.product-item > .product-link-actions { margin: 0; padding: .7rem 1rem; border-top: 1px solid var(--line); }
+.product-link-dialog input { width: 100%; }
 .pill { display: inline-block; padding: .1rem .65rem; border: 1px solid var(--nude); border-radius: 999px; font-size: .75rem; white-space: nowrap; }
 .pill.ok, .pill.st-completed { border-color: var(--ok); color: var(--ok); } .pill.off, .pill.st-cancelled { border-color: var(--danger); color: var(--danger); }
 .pill.warn, .pill.st-pending_shipping { border-color: var(--warn); color: var(--warn); }

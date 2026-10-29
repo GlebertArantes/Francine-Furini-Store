@@ -67,6 +67,10 @@ Em **Mais opções** (fechado por padrão) ficam o *endereço da página*, o *SK
 
 Depois de criar, o painel abre a tela do produto para cadastrar **cores, tamanhos e estoque** (capítulos 5 e 6).
 
+**Divulgar a peça no Instagram ou WhatsApp:** na lista de **Produtos**, cada peça tem **Copiar link** e **Abrir na loja**. Os atalhos também ficam na tela do produto salvo. Toque em **Copiar link** e cole o endereço no adesivo **Link** do Story; a cliente vai abrir diretamente a página daquela peça. Se o navegador bloquear a cópia automática, o painel mostra o endereço para copiar manualmente.
+
+O botão fica desabilitado para produtos ocultos ou com publicação futura. Publique a peça e atualize a lista antes de divulgar. O link usa o endereço (slug) salvo: se alterar esse endereço, salve o produto e copie o novo link. Essa ação copia o endereço e não publica automaticamente no Instagram. Na página pública da peça também existe **Copiar link**, para compartilhar enquanto navega pela loja.
+
 ---
 
 <!-- pagebreak -->
