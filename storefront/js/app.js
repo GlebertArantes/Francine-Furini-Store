@@ -11,6 +11,7 @@ import { successView } from "./views/success.js";
 import { howToBuyView } from "./views/how-to-buy.js";
 import { BRAND, wordmarkContent, wordmarkClass } from "./lib/brand.js";
 import { icon } from "./lib/icons.js";
+import { floatingContactView, VIP_GROUP_URL } from "./views/contact.js";
 import { legalView } from "./views/legal.js";
 
 const appEl = document.getElementById("app");
@@ -59,7 +60,7 @@ function boot() {
   try { const c = sessionStorage.getItem(ORDER_KEY); if (c) ctx.order = { display_code: c }; } catch { /* ok */ }
 
   const shell = buildShell(ctx);
-  appEl.replaceChildren(shell.header, shell.main, shell.footer);
+  appEl.replaceChildren(shell.header, shell.main, shell.footer, shell.contact.root);
   cart.subscribe(() => shell.updateCount());
   shell.updateCount();
   window.addEventListener("hashchange", render);
@@ -67,6 +68,7 @@ function boot() {
   function render() {
     const raw = location.hash.replace(/^#/, "") || "/";
     const [path, qs] = raw.split("?");
+    shell.updateContact(path);
     const query = new URLSearchParams(qs ?? "");
     const storeName = ctx.settings.store_name || "Francine Furini Store";
     document.title = storeName;
@@ -97,7 +99,7 @@ function buildShell(ctx) {
   const wordmark = h("a", { class: wordmarkClass(), href: "#/", "aria-label": "Francine Furini Store — início" }, ...wordmarkContent(h));
   const announce = h("div", { class: "announce hidden", role: "region", "aria-label": "Aviso" });
   const vip = h("div", { class: "vip-header" },
-    h("a", { class: "wrap vip-header-link", href: "https://chat.whatsapp.com/BTfFPclRbd8GpZSt9MuiaJ", target: "_blank", rel: "noopener noreferrer" },
+    h("a", { class: "wrap vip-header-link", href: VIP_GROUP_URL, target: "_blank", rel: "noopener noreferrer" },
       h("span", { class: "vip-header-icon", "aria-hidden": "true" }, icon("whatsapp")),
       h("span", { class: "vip-header-copy" },
         h("strong", {}, "entre no GRUPO VIP", icon("lock")),
@@ -110,6 +112,8 @@ function buildShell(ctx) {
         input, h("button", { type: "submit", "aria-label": "Buscar" }, "Buscar")),
       h("a", { class: "cart-link", href: "#/carrinho" }, "Carrinho", count, countSr)));
   const main = h("main", { id: "main", tabindex: "-1" });
+  const contact = floatingContactView();
+  let currentPath = "/";
   const footerLinks = h("ul", { class: "legal-links" });
   const footerName = h("strong", {});
   const footer = h("footer", { class: "site-footer" }, h("div", { class: "wrap" },
@@ -119,7 +123,8 @@ function buildShell(ctx) {
   footerName.textContent = name();
 
   return {
-    header, main, footer,
+    header, main, footer, contact,
+    updateContact(path) { currentPath = path; contact.update(ctx.settings, currentPath); },
     updateCount() {
       const n = totalQuantity(ctx.cart.get());
       count.textContent = String(n); count.dataset.n = String(n);
@@ -128,6 +133,7 @@ function buildShell(ctx) {
     syncSearch(q) { if (document.activeElement !== input) input.value = q; },
     updateSettings() {
       const s = ctx.settings;
+      contact.update(s, currentPath);
       footerName.textContent = name();
       announce.textContent = s.announcement_text || "";
       announce.classList.toggle("hidden", !s.announcement_text);

@@ -1,6 +1,7 @@
 import { h } from "../lib/dom.js";
 import { filterProducts, facets, featuredProducts } from "../lib/catalog.js";
 import { productCard, loadingGrid, stateBlock } from "./common.js";
+import { vipInviteSection } from "./contact.js";
 import { howToBuySection } from "./how-to-buy.js";
 
 export function homeView(ctx, query) {
@@ -39,6 +40,8 @@ export function homeView(ctx, query) {
         h("p", {}, "Moda feminina para mulheres que expressam sua personalidade em cada detalhe."),
         h("a", { class: "btn", href: "#catalogo" , onclick: (e) => { e.preventDefault(); document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" }); } }, "Ver coleção"))));
     }
+
+    if (!filtered) parts.push(vipInviteSection());
 
     const body = h("div", { class: "wrap section", id: "catalogo" });
     if (categories.length) {

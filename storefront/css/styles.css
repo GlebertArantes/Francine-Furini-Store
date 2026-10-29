@@ -299,3 +299,56 @@ body { overflow-x: hidden; }
 .cep-status[data-kind="not_found"], .cep-status[data-kind="unavailable"] { color: var(--danger, #8f3b2f); }
 @keyframes cepspin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .cep-status[data-kind="loading"]::before { animation: none; } }
+
+/* Convite permanente para o grupo e contato flutuante da loja. */
+.vip-invite { margin-block: .5rem 1.5rem; }
+.vip-invite-panel { position: relative; display: grid; grid-template-columns: 1fr; gap: 1.25rem; padding: 1.65rem; background: #174f3d; color: #fffdf9; border: 1px solid #49745e; border-radius: 1rem; overflow: hidden; }
+.vip-invite-emblem { position: relative; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid #8db69c; border-radius: 50%; background: #23634c; }
+.vip-invite-emblem > .ico { width: 36px; height: 36px; }
+.vip-invite-lock { position: absolute; right: -5px; bottom: -3px; display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #e8d7b8; color: #174f3d; }
+.vip-invite-lock .ico { width: 15px; height: 15px; }
+.vip-invite-eyebrow { margin: 0 0 .4rem; color: #e8d7b8; font-size: .6875rem; font-weight: 600; letter-spacing: .16em; }
+.vip-invite h2 { margin: 0; max-width: 27ch; font: 500 clamp(1.75rem, 3vw, 2.25rem)/1.12 var(--serif); letter-spacing: -.01em; }
+.vip-invite-copy > p:not(.vip-invite-eyebrow) { margin: .7rem 0 0; max-width: 58ch; color: #e0ece4; font-size: .9375rem; }
+.vip-invite-benefits { display: flex; flex-wrap: wrap; gap: .4rem 1rem; padding: 0; margin: 1rem 0 0; list-style: none; color: #e0ece4; font-size: .75rem; }
+.vip-invite-benefits li::before { content: "✓"; margin-right: .35rem; color: #e8d7b8; }
+.vip-invite-action { display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; }
+.vip-invite-button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 50px; padding: .9rem 1.1rem; background: #fffdf9; color: #174f3d; border: 1px solid #fffdf9; border-radius: .4rem; text-decoration: none; font-size: .8125rem; font-weight: 700; letter-spacing: .035em; }
+.vip-invite-button:hover { background: #e8d7b8; border-color: #e8d7b8; }
+.vip-invite-button:focus-visible { outline: 3px solid #e8d7b8; outline-offset: 4px; }
+.vip-invite-action small { color: #e0ece4; font-size: .6875rem; }
+.contact-float { position: fixed; right: max(1.1rem, env(safe-area-inset-right)); bottom: calc(1.1rem + env(safe-area-inset-bottom)); z-index: 30; }
+.contact-float-link { display: inline-flex; align-items: center; gap: .7rem; text-decoration: none; border-radius: 999px; }
+.contact-float-label { padding: .5rem .85rem; background: #fffdf9; color: #174f3d; border: 1px solid var(--line); border-radius: 999px; box-shadow: 0 3px 15px #3a2a2014; font-size: .8125rem; font-weight: 600; }
+.contact-float-icon { position: relative; display: grid; place-items: center; width: 58px; height: 58px; flex: none; border: 2px solid #fffdf9; border-radius: 50%; background: #16894b; color: #fff; box-shadow: 0 4px 20px #174f3d38; transition: transform .2s ease; }
+.contact-float-icon > .ico { width: 31px; height: 31px; stroke-width: 1.6; }
+.contact-float-icon::after { content: ""; position: absolute; inset: -3px; border: 2px solid #16894b; border-radius: 50%; animation: contact-invite-pulse 2.4s ease-out 2; pointer-events: none; }
+.contact-float-link:hover .contact-float-icon { transform: translateY(-3px); }
+.contact-float-link:focus-visible { outline: 3px solid #174f3d; outline-offset: 5px; }
+.site-footer { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+@keyframes contact-invite-pulse { from { transform: scale(1); opacity: .5; } to { transform: scale(1.45); opacity: 0; } }
+@media (min-width: 48rem) {
+  .vip-invite-panel { grid-template-columns: 60px minmax(0, 1fr); align-items: center; gap: 1.5rem; padding: 2rem; }
+  .vip-invite-action { grid-column: 2; }
+}
+@media (min-width: 64rem) {
+  .vip-invite-panel { grid-template-columns: 60px minmax(0, 1fr) auto; padding: 2.25rem; }
+  .vip-invite-action { grid-column: auto; align-items: center; }
+}
+@media (max-width: 39.99rem) {
+  .vip-invite-panel { padding: 1.4rem; gap: 1rem; }
+  .vip-invite-emblem { position: absolute; top: 1rem; right: 1.4rem; width: 36px; height: 36px; }
+  .vip-invite-emblem > .ico { width: 23px; height: 23px; }
+  .vip-invite-lock { width: 18px; height: 18px; }
+  .vip-invite-lock .ico { width: 12px; height: 12px; }
+  .vip-invite-eyebrow { margin-bottom: 1.3rem; max-width: 75%; }
+  .vip-invite-button { width: 100%; }
+  .vip-invite-action { align-items: stretch; }
+  .vip-invite-action small { text-align: center; }
+  .contact-float-label { display: none; }
+  .contact-float-icon { width: 56px; height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-float-icon::after { animation: none; }
+  .contact-float-icon { transition: none; }
+}
