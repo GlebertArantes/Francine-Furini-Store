@@ -11,7 +11,7 @@ import { successView } from "./views/success.js";
 import { howToBuyView } from "./views/how-to-buy.js";
 import { BRAND, wordmarkContent, wordmarkClass } from "./lib/brand.js";
 import { icon } from "./lib/icons.js";
-import { floatingContactView, VIP_GROUP_URL } from "./views/contact.js";
+import { floatingContactView } from "./views/contact.js";
 import { legalView } from "./views/legal.js";
 
 const appEl = document.getElementById("app");
@@ -98,15 +98,7 @@ function buildShell(ctx) {
   const input = h("input", { type: "search", name: "q", id: "q", placeholder: "Buscar peças", autocomplete: "off", enterkeyhint: "search", "aria-label": "Buscar peças" });
   const wordmark = h("a", { class: wordmarkClass(), href: "#/", "aria-label": "Francine Furini Store — início" }, ...wordmarkContent(h));
   const announce = h("div", { class: "announce hidden", role: "region", "aria-label": "Aviso" });
-  const vip = h("div", { class: "vip-header" },
-    h("a", { class: "wrap vip-header-link", href: VIP_GROUP_URL, target: "_blank", rel: "noopener noreferrer" },
-      h("span", { class: "vip-header-icon", "aria-hidden": "true" }, icon("whatsapp")),
-      h("span", { class: "vip-header-copy" },
-        h("strong", {}, "entre no GRUPO VIP", icon("lock")),
-        h("span", {}, "Novidades e lançamentos, pertinho de você.")),
-      h("span", { class: "vip-header-cta" }, "Entrar", h("span", { "aria-hidden": "true" }, "↗")),
-      h("span", { class: "sr-only" }, " (abre em nova aba)")));
-  const header = h("header", { class: "site-header" }, vip, announce,
+  const header = h("header", { class: "site-header" }, announce,
     h("div", { class: "wrap header-row" }, wordmark,
       h("form", { class: "search", role: "search", onsubmit: (e) => { e.preventDefault(); const q = input.value.trim(); ctx.navigate(q ? `#/?q=${encodeURIComponent(q)}` : "#/"); } },
         input, h("button", { type: "submit", "aria-label": "Buscar" }, "Buscar")),
