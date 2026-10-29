@@ -1,0 +1,29 @@
+name: Arquivar catálogo e fotos públicas
+on:
+  push:
+    branches: [taskzap/copia-catalogo-fotos-20261029]
+    paths:
+      - backups/catalogo/2026-10-29/catalogo.json
+      - backups/catalogo/2026-10-29/manifest.json
+      - scripts/archive-public-catalog.py
+      - .github/workflows/archive-public-catalog.yml
+permissions:
+  contents: write
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar e conferir fotos públicas
+        run: python3 scripts/archive-public-catalog.py
+      - name: Conferir cópia local
+        run: python3 scripts/archive-public-catalog.py --verify
+      - name: Versionar os arquivos originais
+        run: |
+          git add backups/catalogo/2026-10-29/images
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "backup: arquivar fotos públicas originais de 2026-10-29"
+          git push origin HEAD:taskzap/copia-catalogo-fotos-20261029
