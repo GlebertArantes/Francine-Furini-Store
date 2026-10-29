@@ -53,7 +53,7 @@ test("logo no login e no cabeçalho (img decorativa + nome em texto)", async () 
 
 // ---- cópia compartilhada ---------------------------------------------------------------------
 test("regras compartilhadas do admin são cópia byte a byte da vitrine (sem divergência)", () => {
-  for (const f of ["catalog.js", "card.js", "format.js"]) assert.equal(read(`admin/js/lib/shared/${f}`), read(`storefront/js/lib/${f}`), `${f} diverge: rode node scripts/sync-admin-shared.mjs`);
+  for (const f of ["catalog.js", "card.js", "format.js", "product-link.js"]) assert.equal(read(`admin/js/lib/shared/${f}`), read(`storefront/js/lib/${f}`), `${f} diverge: rode node scripts/sync-admin-shared.mjs`);
 });
 test("equivalência: card da prévia = card da vitrine para o mesmo produto", () => {
   const sum = previewSummary({ values: initialValues(saved), existing: saved, images: [{ url: "https://x/a.webp", alt: "frente" }], categories: cats });

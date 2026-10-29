@@ -6,6 +6,7 @@ import { editPhoto } from "../lib/photo-editor.js";
 import { loadInto, guard, toast, field, showFieldErrors, confirmDialog, stateBox } from "../lib/ui.js";
 import { createPreviewPanel } from "./product-preview.js";
 import { createPhotoQueue, uploadPhotos, createProductWithPhotos, summarizeUpload } from "../lib/photos.js";
+import { productLinkActions } from "./product-links.js";
 
 // ---------------------------------------------------------------- lista
 export function productsListView(ctx) {
@@ -23,9 +24,10 @@ export function productsListView(ctx) {
       const vs = p.product_variants ?? [];
       const stock = vs.filter((v) => v.active).reduce((n, v) => n + v.quantity, 0);
       const low = vs.filter((v) => v.active && stockLevel(v) !== "ok").length;
-      return h("a", { class: "item", href: `#/produtos/${p.id}` },
+      return h("div", { class: "item product-item" }, h("a", { class: "product-item-main", href: `#/produtos/${p.id}` },
         h("div", {}, h("strong", {}, p.name), h("div", { class: "muted small" }, `${p.sku ? p.sku + " · " : ""}${vs.length} variante(s) · ${stock} em estoque${low ? ` · ${low} com estoque baixo/esgotado` : ""} · ${(p.product_images ?? []).length} foto(s)`)),
-        h("div", { class: "right" }, h("span", {}, formatBRL(p.price_cents)), h("span", { class: `pill ${p.active ? "ok" : "off"}` }, p.active ? "Ativo" : "Inativo"), p.featured ? h("span", { class: "pill" }, "Destaque") : null));
+        h("div", { class: "right" }, h("span", {}, formatBRL(p.price_cents)), h("span", { class: `pill ${p.active ? "ok" : "off"}` }, p.active ? "Ativo" : "Inativo"), p.featured ? h("span", { class: "pill" }, "Destaque") : null)),
+        productLinkActions(p));
     };
     root.replaceChildren(
       h("div", { class: "page-head" }, h("h1", {}, "Produtos"), h("a", { class: "btn", href: "#/produtos/novo" }, "Novo produto")),
@@ -71,6 +73,7 @@ export function productEditView(ctx, id) {
       root.replaceChildren(...[
         h("p", { class: "crumbs" }, h("a", { href: "#/produtos" }, "Produtos"), " / ", product?.name ?? "Novo"),
         h("h1", {}, product ? product.name : "Novo produto"),
+        product ? productLinkActions(product) : null,
         ctx.flash ? flashNotice(ctx) : null,
         bSwitch, split].filter(Boolean));
     });

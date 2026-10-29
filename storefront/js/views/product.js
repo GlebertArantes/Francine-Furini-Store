@@ -2,6 +2,7 @@ import { h, setChildren } from "../lib/dom.js";
 import { colorsOf, sizesOfColor, inStock, cartLine, isSoldOut } from "../lib/catalog.js";
 import { MAX_QTY_PER_VARIANT } from "../lib/cart.js";
 import { imageEl, priceEl, loadingGrid, stateBlock } from "./common.js";
+import { productShareView } from "./product-share.js";
 
 export function productView(ctx, slug) {
   const root = h("div", { class: "wrap" }, loadingGrid());
@@ -30,6 +31,7 @@ export function productView(ctx, slug) {
 
     const gallery = h("div", { class: "gallery" });
     const info = h("div", { class: "info" });
+    const share = productShareView(p);
     root.replaceChildren(
       h("nav", { class: "crumbs", "aria-label": "Você está em" }, h("a", { href: "#/" }, "Início"), " / ", p.name),
       h("div", { class: "product" }, gallery, info));
@@ -79,6 +81,7 @@ export function productView(ctx, slug) {
               qty = 1; draw();
             } }, v && inStock(v) ? (r < 1 ? "Máximo no carrinho" : "Adicionar ao carrinho") : "Esgotado"),
           inCart() > 0 ? h("a", { class: "btn secondary block", href: "#/carrinho" }, `Ver carrinho (${inCart()} desta peça)`) : null),
+        share,
         p.description ? h("p", { class: "desc" }, p.description) : null,
         h("dl", {}, p.fabric ? [h("dt", {}, "Tecido"), h("dd", {}, p.fabric)] : null),
         h("p", { class: "muted", style: "font-size:.875rem" }, "O frete é calculado pela Francine após o pedido, e o pagamento é combinado diretamente com ela."));
