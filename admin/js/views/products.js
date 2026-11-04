@@ -98,7 +98,6 @@ function productForm(ctx, categories, p, redraw, photos) {
   const pub = h("input", { name: "published_at", type: "datetime-local", value: isoToLocalInput(p?.published_at) });
   const featured = h("input", { name: "featured", type: "checkbox", checked: !!p?.featured });
   // Produto novo nasce OCULTO (rascunho): publicar é decisão explícita.
-  if (v) qty.disabled = true;
   const active = h("input", { name: "active", type: "checkbox", checked: p ? p.active : NEW_PRODUCT_DEFAULTS.active });
   const vis = h("div", { class: "vis", role: "status", "aria-live": "polite" });
   const updateVis = () => {
