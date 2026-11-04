@@ -3,7 +3,7 @@
 export class Node {}
 export class Text extends Node { constructor(data) { super(); this.data = String(data); } }
 export class Element extends Node {
-  constructor(tag) { super(); this.tag = tag; this.attrs = {}; this.children = []; this.className = ""; this.listeners = []; }
+  constructor(tag) { super(); this.tag = tag; this.attrs = {}; this.children = []; this.className = ""; this.listeners = []; this.dataset = {}; }
   setAttribute(k, v) { this.attrs[k] = String(v); }
   getAttribute(k) { return this.attrs[k] ?? null; }
   removeAttribute(k) { delete this.attrs[k]; }
@@ -12,6 +12,13 @@ export class Element extends Node {
   append(...args) { this.children.push(...args.map(coerce)); }
   replaceChildren(...args) { this.children = args.map(coerce); }
   replaceWith() {}
+  // seletores simples ("tag", ".classe", "tag.classe"): suficiente para as views do painel
+  querySelectorAll(sel) {
+    const [, tag = "", cls = ""] = /^([a-z0-9]*)(?:\.([\w-]+))?$/i.exec(sel) ?? [];
+    if (!tag && !cls) return [];
+    return findAll(this, (e) => e !== this && (!tag || e.tag === tag) && (!cls || e.className.split(/\s+/).includes(cls)));
+  }
+  querySelector(sel) { return this.querySelectorAll(sel)[0] ?? null; }
   get textContent() { return this.children.map(textOf).join(""); }
   set textContent(v) { this.children = [new Text(v)]; }
 }

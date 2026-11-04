@@ -66,12 +66,18 @@ export function stateBox(title, text, ...actions) {
 /** Carrega dados com estados de loading/erro (com tentar novamente). Erros de sessão vão para o login. */
 export async function loadInto(ctx, root, loader, render) {
   root.replaceChildren(h("p", { class: "loading", "aria-busy": "true" }, "Carregando…"));
-  try {
-    const data = await loader();
-    render(data);
-  } catch (e) {
+  const retry = h("button", { type: "button", class: "btn secondary", onclick: () => loadInto(ctx, root, loader, render) }, "Tentar novamente");
+  let data;
+  try { data = await loader(); }
+  catch (e) {
     if (ctx.fail(e)) return;
-    root.replaceChildren(stateBox("Não foi possível carregar", "Verifique sua conexão e tente novamente.",
-      h("button", { type: "button", class: "btn secondary", onclick: () => loadInto(ctx, root, loader, render) }, "Tentar novamente")));
+    root.replaceChildren(stateBox("Não foi possível carregar", "Verifique sua conexão e tente novamente.", retry));
+    return;
+  }
+  // Falha ao montar a tela NÃO é problema de conexão: não culpar a internet (isso escondeu um erro de código).
+  try { render(data); }
+  catch (e) {
+    console.error("Falha ao montar a tela do painel:", e);
+    root.replaceChildren(stateBox("Não foi possível abrir esta tela", "Ocorreu um erro inesperado no painel (não é a sua internet). Recarregue a página; se continuar, avise o suporte.", retry));
   }
 }
