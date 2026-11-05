@@ -18,13 +18,13 @@ function setup({ email = FRAN_LOGIN, count = 0, fail = false } = {}) {
   const options={auth,url:"https://example.supabase.co",key:"sb_publishable_test",fetchFn};
   return {options,user,calls,auth};
 }
-test("inauguração acompanha a conta entre aparelhos e para depois de três acessos",async()=>{
+test("inauguração acompanha a conta entre aparelhos e para depois de dez acessos",async()=>{
   const {options,user,calls}=setup();
-  for(let i=1;i<=3;i++) assert.equal(await createInaugurationAccess({...options,tabStorage:memory()}).claim(),i);
+  for(let i=1;i<=10;i++) assert.equal(await createInaugurationAccess({...options,tabStorage:memory()}).claim(),i);
   assert.equal(await createInaugurationAccess({...options,tabStorage:memory()}).claim(),0);
-  assert.equal(user.user_metadata[INAUGURATION_KEY].views,3);
+  assert.equal(user.user_metadata[INAUGURATION_KEY].views,10);
   assert.equal(user.user_metadata.untouched,"preserve");
-  assert.equal(calls.filter(c=>c.init.method==="PUT").length,3);
+  assert.equal(calls.filter(c=>c.init.method==="PUT").length,10);
   for(const c of calls) assert.equal(c.init.headers.authorization,"Bearer user-token");
 });
 test("atualizar a aba não consome acesso; sair e entrar conta novo acesso",async()=>{
@@ -46,4 +46,10 @@ test("falha de rede não bloqueia painel nem mostra convite sem salvar a contage
   const {options,user}=setup({fail:true});
   assert.equal(await createInaugurationAccess(options).claim(),0);
   assert.equal(user.user_metadata[INAUGURATION_KEY].views,0);
+});
+
+test("contagem anterior de três acessos continua até dez, sem reiniciar",async()=>{
+  const {options,user}=setup({count:3});
+  assert.equal(await createInaugurationAccess(options).claim(),4);
+  assert.equal(user.user_metadata[INAUGURATION_KEY].views,4);
 });

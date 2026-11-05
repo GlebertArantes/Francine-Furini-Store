@@ -1,7 +1,8 @@
 // Preferência visual da conta; nunca participa da autorização (is_admin/RLS).
 export const INAUGURATION_KEY = "ff_inauguration_20261105";
+export const INAUGURATION_LIMIT = 10;
 export const FRAN_LOGIN = "fran1010@admin.francine-furini.local";
-const validCount = (value) => Number.isInteger(value) && value >= 0 ? Math.min(value, 3) : 0;
+const validCount = (value) => Number.isInteger(value) && value >= 0 ? Math.min(value, INAUGURATION_LIMIT) : 0;
 
 export function createInaugurationAccess({ auth, url, key, fetchFn, tabStorage = null }) {
   let attempted = false;
@@ -27,7 +28,7 @@ export function createInaugurationAccess({ auth, url, key, fetchFn, tabStorage =
         const user = await current.json();
         if (user.id !== userId || user.email?.toLowerCase() !== FRAN_LOGIN) return 0;
         const count = validCount(user.user_metadata?.[INAUGURATION_KEY]?.views);
-        if (count >= 3 || auth.user?.id !== userId) return 0;
+        if (count >= INAUGURATION_LIMIT || auth.user?.id !== userId) return 0;
         const next = count + 1;
         const saved = await fetchFn(`${url}/auth/v1/user`, {
           method: "PUT", headers, signal: AbortSignal.timeout(6000),
