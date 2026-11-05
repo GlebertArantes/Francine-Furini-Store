@@ -273,7 +273,7 @@ dialog.photo-editor::backdrop { background: rgba(30,24,20,.65); }
   .quick-qty { justify-content:flex-end; }
 }
 
-/* Entrega privada da Fran: três acessos, contados na preferência da conta. */
+/* Entrega privada da Fran: dez acessos, contados na preferência da conta. */
 .inauguration-dialog { position: fixed; width: min(760px, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; margin: auto; padding: 3.2rem 2.3rem 1.6rem; border: 1px solid #b89a5c; border-radius: 22px; background: radial-gradient(ellipse at center, #fffaf1, #f5eadb); color: #482916; text-align: center; box-shadow: 0 20px 90px #23180e55, inset 0 0 0 4px #fff9ed; }
 .inauguration-dialog::backdrop { background: #29190e80; backdrop-filter: blur(4px); }
 .inauguration-close { position: absolute; top: .7rem; right: .7rem; width: 44px; height: 44px; border: 0; background: transparent; color: #603b23; font-size: 2rem; cursor: pointer; }

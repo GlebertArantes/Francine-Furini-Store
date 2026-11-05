@@ -36,6 +36,6 @@ Pixel da Meta, anúncios e novas funcionalidades.
 ## Fechamento da entrega — 05/11/2026
 Glebert confirmou o administrativo vazio e autorizou a entrega e a inauguração privada. A vitrine publicada foi conferida mostrando “Novidades em breve”.
 
-A faixa de boas-vindas é exclusiva do login da Fran, depois da autorização normal de administrador. A contagem de três acessos fica na preferência visual da própria conta (Supabase Auth), sem alterar permissões, catálogo ou pedidos. Atualizar a mesma aba não consome outro acesso; sair e entrar novamente ou abrir em outra aba/aparelho conta como novo acesso. A faixa pode ser fechada com o botão ou Escape e respeita movimento reduzido.
+A faixa de boas-vindas é exclusiva do login da Fran, depois da autorização normal de administrador. A contagem de dez acessos fica na preferência visual da própria conta (Supabase Auth), sem alterar permissões, catálogo ou pedidos. Atualizar a mesma aba não consome outro acesso; sair e entrar novamente ou abrir em outra aba/aparelho conta como novo acesso. A faixa pode ser fechada com o botão ou Escape e respeita movimento reduzido.
 
 A validação visual da animação usa uma página isolada de prévia com dados fictícios, retirada do código final. A sessão real da Fran não é usada nem tem seus acessos de inauguração consumidos pela verificação.
