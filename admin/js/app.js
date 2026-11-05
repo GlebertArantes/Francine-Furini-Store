@@ -13,6 +13,9 @@ import { productsListView, productEditView } from "./views/products.js";
 import { ordersListView, orderDetailView } from "./views/orders.js";
 import { quickSaleView } from "./views/quick-sale.js";
 
+import { createInaugurationAccess } from "./lib/inauguration.js";
+import { showInauguration } from "./views/inauguration.js";
+
 const appEl = document.getElementById("app");
 
 function boot() {
@@ -29,6 +32,10 @@ function boot() {
   const fetchFn = (u, i) => fetch(u, i);
   const auth = createAuth({ url: cfg.supabaseUrl, key: cfg.key, fetchFn, storage });
   const api = createAdminApi({ url: cfg.supabaseUrl, key: cfg.key, auth, fetchFn });
+  let tabStorage = null;
+  try { tabStorage = window.sessionStorage; } catch { /* sem storage */ }
+  const inauguration = createInaugurationAccess({ auth, url: cfg.supabaseUrl, key: cfg.key, fetchFn, tabStorage });
+  let closeInauguration = null;
   let mode = "login"; // login | denied | panel
 
   const ctx = {
@@ -44,11 +51,15 @@ function boot() {
       try { admin = await api.isAdmin(); } catch (e) { if (ctx.fail(e)) return; toast("Não foi possível verificar o acesso. Tente novamente.", "error"); await auth.signOut(); return showLogin(); }
       if (!admin) { mode = "denied"; appEl.replaceChildren(deniedView(ctx)); return; }
       mode = "panel"; renderShell(); renderRoute();
+      const enteringUser = auth.user?.id;
+      void inauguration.claim().then((access) => {
+        if (access && mode === "panel" && auth.user?.id === enteringUser) closeInauguration = showInauguration();
+      });
     },
     async logout() { await auth.signOut(); showLogin(); },
   };
 
-  function showLogin(notice) { mode = "login"; appEl.replaceChildren(loginView(ctx, notice)); }
+  function showLogin(notice) { closeInauguration?.(); closeInauguration = null; inauguration.reset(); mode = "login"; appEl.replaceChildren(loginView(ctx, notice)); }
 
   const main = h("main", { id: "main", tabindex: "-1" });
   const links = [["#/", "Painel"], ["#/pedidos", "Pedidos"], ["#/venda-rapida", "Venda Rápida"], ["#/produtos", "Produtos"], ["#/categorias", "Categorias"]];

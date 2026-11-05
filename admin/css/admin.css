@@ -272,3 +272,33 @@ dialog.photo-editor::backdrop { background: rgba(30,24,20,.65); }
   .quick-line { align-items:flex-start; }
   .quick-qty { justify-content:flex-end; }
 }
+
+/* Entrega privada da Fran: três acessos, contados na preferência da conta. */
+.inauguration-dialog { position: fixed; width: min(760px, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; margin: auto; padding: 3.2rem 2.3rem 1.6rem; border: 1px solid #b89a5c; border-radius: 22px; background: radial-gradient(ellipse at center, #fffaf1, #f5eadb); color: #482916; text-align: center; box-shadow: 0 20px 90px #23180e55, inset 0 0 0 4px #fff9ed; }
+.inauguration-dialog::backdrop { background: #29190e80; backdrop-filter: blur(4px); }
+.inauguration-close { position: absolute; top: .7rem; right: .7rem; width: 44px; height: 44px; border: 0; background: transparent; color: #603b23; font-size: 2rem; cursor: pointer; }
+.inauguration-eyebrow { font-size: .65rem; letter-spacing: .24em; color: #886739; margin: 0 0 .9rem; }
+.inauguration-dialog h2 { margin: 0; font-family: Georgia, serif; font-size: clamp(1.9rem, 4vw, 3.1rem); font-weight: 500; line-height: 1.1; }
+.inauguration-subtitle { font: italic clamp(1rem, 2.5vw, 1.25rem)/1.5 Georgia, serif; margin: 1rem 0 0; }
+.inauguration-art { position: relative; height: 195px; margin: 0 -2.3rem; overflow: hidden; }
+.ribbon { position: absolute; top: 76px; height: 47px; width: 51%; background: linear-gradient(#e04a4d, #b90f27 18%, #8c071d 55%, #cb2038 83%, #f05d60); border-block: 1px solid #89091c; box-shadow: 0 7px 10px #56182735; transition: transform 1s ease, opacity .8s ease; }
+.ribbon-left { left: 0; transform: rotate(3deg); transform-origin: left; }
+.ribbon-right { right: 0; transform: rotate(-3deg); transform-origin: right; }
+.ribbon-bow { position: absolute; top: 50px; left: calc(50% - 70px); width: 140px; height: 110px; transition: transform .9s, opacity .6s; }
+.ribbon-bow i { position: absolute; left: 0; width: 75px; height: 65px; border: 2px solid #a10b24; background: linear-gradient(140deg,#f05e64,#ba102a 35%,#81051a 70%,#e94653); border-radius: 12% 65% 15% 65%; box-shadow: 0 6px 7px #54132233; transform: rotate(15deg); }
+.ribbon-bow i + i { left: auto; right: 0; transform: scaleX(-1) rotate(15deg); }
+.ribbon-bow::after { content: ""; position: absolute; top: 35px; left: 60px; height: 40px; width: 23px; border-radius: 6px; background: linear-gradient(90deg,#81051a,#db3a4d,#980b23); }
+.ribbon-scissors { position: absolute; top: 86px; left: 64%; color: #ba8b36; text-shadow: 1px 2px #67411b, 0 4px 6px #5a371a33; font: 92px/1 Georgia, serif; transform: rotate(-25deg); transition: transform .5s ease; }
+.ribbon-cut .ribbon-left { transform: rotate(18deg) translateX(-35%); opacity: 0; }
+.ribbon-cut .ribbon-right { transform: rotate(-18deg) translateX(35%); opacity: 0; }
+.ribbon-cut .ribbon-bow { transform: translateY(90px) rotate(20deg); opacity: 0; }
+.ribbon-cut .ribbon-scissors { transform: translateX(-70px) rotate(-5deg); }
+.inauguration-result { min-height: 1.6em; margin: 0 auto .8rem; max-width: 40ch; font: 1.1rem/1.5 Georgia, serif; }
+.inauguration-action { width: min(100%, 370px); min-height: 52px; background: #53321e; border-color: #53321e; color: #fffaf1; border-radius: 12px; font-size: 1rem; }
+.inauguration-signature { margin: 1rem 0 0; font: italic 1rem/1.5 Georgia, serif; }
+.ribbon-confetti { position: absolute; top: 60%; left: 50%; width: 7px; height: 12px; opacity: 0; background: #bf954a; }
+.ribbon-cut .ribbon-confetti { animation: inauguration-confetti 1.1s ease-out both; }
+.confetti-0 { --x: -220px; --y: -95px; } .confetti-1 { --x: -170px; --y: 45px; } .confetti-2 { --x: -100px; --y: -70px; } .confetti-3 { --x: -60px; --y: 70px; } .confetti-4 { --x: 80px; --y: -110px; } .confetti-5 { --x: 120px; --y: 50px; } .confetti-6 { --x: 190px; --y: -50px; } .confetti-7 { --x: 230px; --y: 65px; }
+@keyframes inauguration-confetti { 15% { opacity: 1; } 100% { transform: translate(var(--x), var(--y)) rotate(240deg); opacity: 0; } }
+@media (max-width: 480px) { .inauguration-dialog { padding: 2.8rem 1.2rem 1.3rem; } .inauguration-art { margin-inline: -1.2rem; height: 165px; } .ribbon-scissors { left: 65%; font-size: 70px; } .ribbon-bow { transform: scale(.8); } }
+@media (prefers-reduced-motion: reduce) { .inauguration-dialog * { animation: none !important; transition: none !important; } }
