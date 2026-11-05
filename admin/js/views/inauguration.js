@@ -11,7 +11,9 @@ export function showInauguration() {
     clearTimeout(timer);
     dialog.close();
     dialog.remove();
-    if (previousFocus?.isConnected) previousFocus.focus();
+    // Sem foco prévio útil (o modal abre depois do painel carregar), devolve o foco ao conteúdo principal.
+    const back = previousFocus?.isConnected && previousFocus !== document.body ? previousFocus : document.getElementById("main");
+    back?.focus?.({ preventScroll: true });
   };
   const title = h("h2", { id: "inauguration-title" }, "Sua loja está pronta, Fran!");
   const subtitle = h("p", { id: "inauguration-description", class: "inauguration-subtitle" }, "Um novo começo para muitas conquistas.");

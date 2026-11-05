@@ -24,6 +24,12 @@ export function createAuth({ url, key, fetchFn, storage = null, now = () => Math
     listeners.forEach((fn) => fn(s));
   };
   session = load();
+  // O refresh_token é de uso único: se outra aba renovou, a sessão mais nova está no storage compartilhado.
+  const adoptNewer = () => {
+    const stored = load();
+    if (stored && stored.refresh_token !== session?.refresh_token && stored.expires_at > (session?.expires_at ?? 0)) { session = stored; return true; }
+    return false;
+  };
 
   const post = (path, body, token) => fetchFn(`${url}/auth/v1/${path}`, {
     method: "POST",
@@ -64,11 +70,18 @@ export function createAuth({ url, key, fetchFn, storage = null, now = () => Math
     refresh() {
       if (!session?.refresh_token) return Promise.resolve(false);
       if (refreshing) return refreshing;
+      if (adoptNewer()) return Promise.resolve(true); // outra aba já renovou
       const rt = session.refresh_token;
       refreshing = (async () => {
         try {
           const res = await post("token?grant_type=refresh_token", { refresh_token: rt });
-          if (!res.ok) { save(null); return false; }
+          if (!res.ok) {
+            // Falha transitória (limite de requisições/indisponibilidade) não encerra a sessão.
+            if (res.status === 429 || res.status >= 500) return false;
+            // Token recusado: pode ter sido trocado por outra aba um instante antes.
+            if (adoptNewer()) return true;
+            save(null); return false;
+          }
           save(toSession(await res.json()));
           return true;
         } catch { return false; } // falha de rede: mantém sessão, tenta depois
@@ -80,7 +93,8 @@ export function createAuth({ url, key, fetchFn, storage = null, now = () => Math
     /** Token válido (renova se faltar pouco). null = sem sessão utilizável. */
     async getAccessToken() {
       if (!session) return null;
-      if (session.expires_at - now() <= SKEW_SECONDS) { if (!(await this.refresh()) && (!session || session.expires_at <= now())) return null; }
+      if (session.expires_at - now() <= SKEW_SECONDS) {
+        if (adoptNewer() && session.expires_at - now() > SKEW_SECONDS) return session.access_token; if (!(await this.refresh()) && (!session || session.expires_at <= now())) return null; }
       return session?.access_token ?? null;
     },
 

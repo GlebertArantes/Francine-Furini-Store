@@ -1,3 +1,5 @@
+> Documentação de desenvolvimento. Fica em `docs/` de propósito: a pasta `admin/` é publicada na web e não deve conter documentos internos.
+
 # Painel administrativo — Francine Furini Store (V1)
 
 HTML + CSS + módulos ES, sem framework e sem dependências em runtime (mesmo padrão do storefront, mas **independente**:

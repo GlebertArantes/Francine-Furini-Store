@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Baixar e conferir fotos públicas
-        run: python3 scripts/archive-public-catalog.py
+        run: python3 scripts/archive-public-catalog.py --dir backups/catalogo/2026-10-29
       - name: Conferir cópia local
-        run: python3 scripts/archive-public-catalog.py --verify
+        run: python3 scripts/archive-public-catalog.py --verify --dir backups/catalogo/2026-10-29
       - name: Versionar os arquivos originais
         run: |
           git add backups/catalogo/2026-10-29/images

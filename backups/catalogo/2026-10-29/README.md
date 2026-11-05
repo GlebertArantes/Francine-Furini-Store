@@ -6,7 +6,7 @@ Esta pasta conserva os dados publicados dos quatro produtos e as dez fotos origi
 Execute, na raiz do repositório:
 
 ```sh
-python3 scripts/archive-public-catalog.py --verify
+python3 scripts/archive-public-catalog.py --verify --dir backups/catalogo/2026-10-29
 ```
 
 Sem `--verify`, o script baixa novamente somente arquivos ausentes e verifica os mesmos hashes. Falhas de download ou divergências interrompem a execução. Não sobrescreve uma cópia existente divergente.
