@@ -1,3 +1,5 @@
+> Documentação de desenvolvimento. Fica em `docs/` de propósito: a pasta `storefront/` é publicada na web e não deve conter documentos internos.
+
 # Storefront — Francine Furini Store (V1)
 
 Loja pública estática (HTML + CSS + JS em módulos ES, **sem framework e sem build pesado**). O catálogo, estoque e
