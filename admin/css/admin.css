@@ -285,8 +285,8 @@ dialog.photo-editor::backdrop { background: rgba(30,24,20,.65); }
 .ribbon-left { left: 0; transform: rotate(3deg); transform-origin: left; }
 .ribbon-right { right: 0; transform: rotate(-3deg); transform-origin: right; }
 .ribbon-bow { position: absolute; top: 50px; left: calc(50% - 70px); width: 140px; height: 110px; transition: transform .9s, opacity .6s; }
-.ribbon-bow i { position: absolute; width: 75px; height: 65px; border: 2px solid #a10b24; background: linear-gradient(140deg,#f05e64,#ba102a 35%,#81051a 70%,#e94653); border-radius: 12% 65% 15% 65%; box-shadow: 0 6px 7px #54132233; transform: rotate(15deg); }
-.ribbon-bow i + i { right: 0; transform: scaleX(-1) rotate(15deg); }
+.ribbon-bow i { position: absolute; left: 0; width: 75px; height: 65px; border: 2px solid #a10b24; background: linear-gradient(140deg,#f05e64,#ba102a 35%,#81051a 70%,#e94653); border-radius: 12% 65% 15% 65%; box-shadow: 0 6px 7px #54132233; transform: rotate(15deg); }
+.ribbon-bow i + i { left: auto; right: 0; transform: scaleX(-1) rotate(15deg); }
 .ribbon-bow::after { content: ""; position: absolute; top: 35px; left: 60px; height: 40px; width: 23px; border-radius: 6px; background: linear-gradient(90deg,#81051a,#db3a4d,#980b23); }
 .ribbon-scissors { position: absolute; top: 86px; left: 64%; color: #ba8b36; text-shadow: 1px 2px #67411b, 0 4px 6px #5a371a33; font: 92px/1 Georgia, serif; transform: rotate(-25deg); transition: transform .5s ease; }
 .ribbon-cut .ribbon-left { transform: rotate(18deg) translateX(-35%); opacity: 0; }
