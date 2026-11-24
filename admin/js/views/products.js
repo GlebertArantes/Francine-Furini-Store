@@ -1,7 +1,7 @@
 import { h } from "../lib/dom.js";
 import { formatBRL, centsToInput } from "../lib/money.js";
 import { validateProduct, validateVariant, slugify, stockLevel, reorderImages, isoToLocalInput, NEW_PRODUCT_DEFAULTS, visibilityInfo, publishWarnings } from "../lib/rules.js";
-import { shouldShrink, shrinkImage } from "../lib/image-resize.js";
+import { optimizeImageForUpload } from "../lib/image-optimizer.js";
 import { editPhoto } from "../lib/photo-editor.js";
 import { loadInto, guard, toast, field, showFieldErrors, confirmDialog, stateBox } from "../lib/ui.js";
 import { createPreviewPanel } from "./product-preview.js";
@@ -303,11 +303,11 @@ export function photoPicker({ onChange } = {}) {
   const urls = new Map();
   const id = `pick-${Math.random().toString(36).slice(2, 6)}`;
   // O input nativo fica oculto (porém focável); o botão em português abre a galeria do celular.
-  const input = h("input", { type: "file", id, class: "file-input", accept: "image/jpeg,image/png,image/webp,image/avif", multiple: true });
+  const input = h("input", { type: "file", id, class: "file-input", accept: "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif", multiple: true });
   const pick = h("label", { class: "btn secondary", for: id }, "Escolher fotos da galeria");
   const status = h("p", { class: "muted small", role: "status", "aria-live": "polite" });
   const list = h("div", { class: "previews" });
-  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada (fotos maiores são reduzidas automaticamente). A primeira foto é a principal. Use Ajustar foto para mover, girar e mudar o zoom antes de enviar.");
+  const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP, AVIF ou HEIC (fotos do iPhone). Toda foto é otimizada automaticamente para a loja — você não precisa comprimir nada antes de enviar. A primeira foto é a principal. Use Ajustar foto para mover, girar e mudar o zoom antes de enviar.");
   let note = "", pending = 0, generation = 0;
   const releaseUrl = (key) => { const url = urls.get(key); if (url) URL.revokeObjectURL(url); urls.delete(key); };
 
@@ -322,8 +322,15 @@ export function photoPicker({ onChange } = {}) {
         pending++; input.disabled = true; onChange?.(false);
         try {
           const edited = await editPhoto(it.originalFile, it.edit);
-          if (current === generation && edited && queue.applyEdit(it.key, edited.file, edited.state)) releaseUrl(it.key);
-        } catch { toast("Não foi possível abrir esta foto. Escolha uma imagem JPEG, PNG, WebP ou AVIF válida.", "error"); }
+          if (current === generation && edited) {
+            // A otimização roda SOBRE o arquivo já recortado (nunca antes: senão o recorte
+            // trabalharia sobre a versão errada). Se falhar, mantém o recorte original — nunca
+            // perde o ajuste já feito pela cliente.
+            let finalFile = edited.file;
+            try { finalFile = await optimizeImageForUpload(edited.file); } catch { /* mantém o arquivo recortado */ }
+            if (queue.applyEdit(it.key, finalFile, edited.state)) releaseUrl(it.key);
+          }
+        } catch { toast("Não foi possível abrir esta foto. Escolha uma imagem JPEG, PNG, WebP, AVIF ou HEIC válida.", "error"); }
         finally {
           pending--; input.disabled = pending > 0;
           if (current === generation) { draw(); list.querySelector(`[data-edit-photo="${it.key}"]`)?.focus(); }
@@ -347,16 +354,17 @@ export function photoPicker({ onChange } = {}) {
     const current = generation;
     pending++; input.disabled = true; onChange?.(false);
     const files = [...input.files]; input.value = "";
-    const prepared = []; let shrunk = 0;
+    const prepared = []; let optimized = 0;
     for (const f of files) {
-      if (shouldShrink(f)) {
-        status.textContent = `Reduzindo a foto grande “${f.name}”…`;
-        try { prepared.push(await shrinkImage(f)); shrunk++; continue; } catch { /* mantém o original: será sinalizado como grande demais */ }
-      }
-      prepared.push(f);
+      status.textContent = files.length > 1 ? `Otimizando foto ${prepared.length + 1} de ${files.length}…` : `Otimizando “${f.name}”…`;
+      // Toda foto passa pelo TaskZap Image Optimizer (WebP/JPEG, até 2000px, qualidade 0.85)
+      // ANTES de entrar na fila — a cliente nunca precisa comprimir nada manualmente. Se falhar
+      // (ex.: arquivo corrompido), mantém o original: a validação sinaliza o problema normalmente.
+      try { prepared.push(await optimizeImageForUpload(f)); optimized++; }
+      catch { prepared.push(f); }
     }
     pending--; input.disabled = pending > 0;
-    if (current === generation) { note = shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : ""; queue.add(prepared); draw(); }
+    if (current === generation) { note = optimized ? `${optimized} foto(s) otimizada(s) automaticamente.` : ""; queue.add(prepared); draw(); }
   });
   draw();
 
