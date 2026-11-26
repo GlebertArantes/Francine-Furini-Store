@@ -10,7 +10,7 @@ test("seletor mostra carregamento, prévia pronta, envio e X com motivo da falha
   URL.revokeObjectURL = () => {};
   const picker = photoPicker();
   try {
-    const input = findAll(picker.el, e => e.tag === "input" && e.type === "file")[0];
+    const input = findAll(picker.el, e => e.tag === "input" && e.attrs.type === "file")[0];
     input.files = [{ name: "vestido.jpg", size: 100, type: "image/jpeg" }];
     const changed = input.listeners.find(([type]) => type === "change")[1];
     await changed();
