@@ -8,6 +8,31 @@ import { createPreviewPanel } from "./product-preview.js";
 import { createPhotoQueue, uploadPhotos, createProductWithPhotos, summarizeUpload } from "../lib/photos.js";
 import { productLinkActions } from "./product-links.js";
 
+
+const PHOTO_STATE_TEXT = { preparing: "Preparando foto…", loading: "Carregando prévia…", ready: "Pronta para enviar", sending: "Enviando foto…", success: "Foto enviada", error: "Não foi possível carregar" };
+function photoIndicator(state, detail = "") {
+  const icon = state === "error" ? "✕" : state === "ready" || state === "success" ? "✓" : "◌";
+  return h("span", { class: `photo-state photo-state-${state}`, role: "status", "aria-live": "polite" },
+    h("span", { class: "photo-state-icon", "aria-hidden": "true" }, icon),
+    h("span", {}, detail || PHOTO_STATE_TEXT[state]));
+}
+function observePhotoUpload(ctx, picker) {
+  const report = [];
+  return (event) => {
+    picker.setUploadState(event);
+    if (event.state !== "sending") {
+      report.push(event);
+      ctx.photoUploadReport = { productId: event.productId, items: [...report] };
+    }
+  };
+}
+function photoUploadReport(ctx, productId) {
+  if (ctx.photoUploadReport?.productId !== productId) return null;
+  return h("div", { class: "photo-upload-report" }, ctx.photoUploadReport.items.map((item) =>
+    h("p", {}, h("strong", {}, item.name), " ", photoIndicator(item.state,
+      item.state === "error" ? `Falhou: ${item.reason}. Selecione esta foto novamente para tentar.` : "Foto enviada com sucesso"))));
+}
+
 // ---------------------------------------------------------------- lista
 export function productsListView(ctx) {
   const root = h("div", { class: "page" });
@@ -142,7 +167,7 @@ function productForm(ctx, categories, p, redraw, photos) {
       if (p) { await ctx.api.updateProduct(p.id, v.payload); toast(v.payload.active ? "Produto salvo." : "Produto salvo (oculto da loja)."); redraw(); }
       else {
         // 1) cria o produto (falhou => nada é enviado e a seleção de fotos permanece); 2) envia as fotos com o ID retornado.
-        const r = await createProductWithPhotos(ctx.api, v.payload, photos.queue, { onProgress: ({ done, total }) => { btn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
+        const r = await createProductWithPhotos(ctx.api, v.payload, photos.queue, { onState: observePhotoUpload(ctx, photos), onProgress: ({ done, total }) => { btn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
         if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
         const sum = summarizeUpload(r);
         ctx.flash = sum.hasProblem ? { type: "error", text: `Produto criado, mas houve problemas com as fotos. ${sum.text}` } : null;
@@ -245,7 +270,7 @@ function imagesSection(ctx, p, redraw) {
   const upload = guard(uploadBtn, async () => {
     if (pk.busy) { toast("Aguarde terminar o ajuste das fotos antes de enviar.", "error"); return; }
     const start = images.reduce((m, i) => Math.max(m, i.sort_order), -1) + 1;
-    const r = await uploadPhotos(ctx.api, p.id, pk.queue.valid(), start, { onProgress: ({ done, total }) => { uploadBtn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
+    const r = await uploadPhotos(ctx.api, p.id, pk.queue.valid(), start, { onState: observePhotoUpload(ctx, pk), onProgress: ({ done, total }) => { uploadBtn.textContent = `Enviando foto ${done + 1} de ${total}…`; } });
     if (r.sessionExpired) { ctx.fail({ code: "session_expired" }); return; }
     const sum = summarizeUpload(r);
     if (sum.text) toast(sum.text, sum.hasProblem ? "error" : "ok");
@@ -284,7 +309,7 @@ function imagesSection(ctx, p, redraw) {
           delBtn)));
   };
 
-  return h("section", { class: "panel" }, h("h2", {}, "Fotos"),
+  return h("section", { class: "panel" }, h("h2", {}, "Fotos"), photoUploadReport(ctx, p.id),
     images.length ? h("ul", { class: "rows imgs" }, images.map(imgRow)) : h("p", { class: "muted" }, "Nenhuma foto ainda."),
     h("div", { class: "upload" }, pk.el, uploadBtn));
 }
@@ -301,6 +326,8 @@ function flashNotice(ctx) {
 export function photoPicker({ onChange } = {}) {
   const queue = createPhotoQueue();
   const urls = new Map();
+  const indicators = new Map(), previewStates = new Map(), previewTimers = new Map();
+  let preparing = [];
   const id = `pick-${Math.random().toString(36).slice(2, 6)}`;
   // O input nativo fica oculto (porém focável); o botão em português abre a galeria do celular.
   const input = h("input", { type: "file", id, class: "file-input", accept: "image/jpeg,image/png,image/webp,image/avif", multiple: true });
@@ -309,13 +336,25 @@ export function photoPicker({ onChange } = {}) {
   const list = h("div", { class: "previews" });
   const info = h("p", { class: "muted small" }, "JPEG, PNG, WebP ou AVIF, até 8 MB cada (fotos maiores são reduzidas automaticamente). A primeira foto é a principal. Use Ajustar foto para mover, girar e mudar o zoom antes de enviar.");
   let note = "", pending = 0, generation = 0;
-  const releaseUrl = (key) => { const url = urls.get(key); if (url) URL.revokeObjectURL(url); urls.delete(key); };
+  const releaseUrl = (key) => { clearTimeout(previewTimers.get(key)); previewTimers.delete(key); previewStates.delete(key); const url = urls.get(key); if (url) URL.revokeObjectURL(url); urls.delete(key); };
 
   const draw = () => {
-    list.replaceChildren(...queue.items.map((it, i) => {
+    indicators.clear();
+    list.replaceChildren(...preparing.map((file) => h("figure", { class: "preview" }, h("figcaption", {}, file.name), photoIndicator("preparing"))), ...queue.items.map((it, i) => {
       if (it.check.ok && !urls.has(it.key)) urls.set(it.key, URL.createObjectURL(it.file));
+      const indicator = photoIndicator(it.check.ok ? (previewStates.get(it.key) || "loading") : "error", it.check.ok ? "" : it.check.error);
+      indicators.set(it.key, indicator);
+      const settlePreview = (state) => {
+        clearTimeout(previewTimers.get(it.key)); previewTimers.delete(it.key);
+        if (!urls.has(it.key) || ["sending", "success"].includes(previewStates.get(it.key))) return;
+        previewStates.set(it.key, state);
+        indicator.replaceChildren(photoIndicator(state, state === "error" ? "A prévia não carregou. Remova e selecione a foto novamente." : ""));
+      };
+      clearTimeout(previewTimers.get(it.key));
+      const preview = urls.has(it.key) ? h("img", { src: urls.get(it.key), alt: "Pré-visualização", onload: () => settlePreview("ready"), onerror: () => settlePreview("error") }) : null;
+      if (preview) previewTimers.set(it.key, setTimeout(() => settlePreview("error"), 20000));
       const alt = h("input", { value: it.alt, maxlength: 200, placeholder: "Texto alternativo (opcional)", "aria-label": `Texto alternativo de ${it.file.name}`, oninput: (e) => queue.setAlt(it.key, e.target.value) });
-      const rm = h("button", { type: "button", class: "link-btn danger", "aria-label": `Remover ${it.file.name} da seleção`, onclick: () => { const u = urls.get(it.key); if (u) { URL.revokeObjectURL(u); urls.delete(it.key); } queue.remove(it.key); draw(); } }, "Remover da seleção");
+      const rm = h("button", { type: "button", class: "link-btn danger", "aria-label": `Remover ${it.file.name} da seleção`, onclick: () => { releaseUrl(it.key); queue.remove(it.key); draw(); } }, "Remover da seleção");
       const adjust = h("button", { type: "button", class: "btn small secondary", "data-edit-photo": it.key, disabled: pending > 0, onclick: async () => {
         if (pending) return;
         const current = generation;
@@ -334,7 +373,7 @@ export function photoPicker({ onChange } = {}) {
         queue.restore(it.key); releaseUrl(it.key); draw();
       } }, "Voltar à foto original") : null;
       return h("figure", { class: `preview${it.check.ok ? "" : " bad"}`, "data-photo": it.file.name },
-        urls.has(it.key) ? h("img", { src: urls.get(it.key), alt: "Pré-visualização" }) : null,
+        preview, indicator,
         h("figcaption", {}, it.check.ok ? `${i === 0 ? "Principal · " : ""}${it.file.name}` : it.file.name),
         it.check.ok ? alt : h("p", { class: "err" }, it.check.error), it.check.ok ? adjust : null, restore, rm);
     }));
@@ -347,6 +386,8 @@ export function photoPicker({ onChange } = {}) {
     const current = generation;
     pending++; input.disabled = true; onChange?.(false);
     const files = [...input.files]; input.value = "";
+    preparing = files; draw();
+    status.textContent = "Preparando fotos. Aguarde…";
     const prepared = []; let shrunk = 0, failed = 0;
     try {
       for (const f of files) {
@@ -361,6 +402,7 @@ export function photoPicker({ onChange } = {}) {
     } finally {
       pending--; input.disabled = pending > 0;
       if (current === generation) {
+        preparing = [];
         note = [shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : "",
           failed ? `Não foi possível processar ${failed} foto(s). Tente novamente ou selecione uma versão JPG menor.` : ""].filter(Boolean).join(" ");
         queue.add(prepared); draw();
@@ -371,11 +413,13 @@ export function photoPicker({ onChange } = {}) {
 
   return {
     queue,
+    setUploadState({ key, state, reason }) { clearTimeout(previewTimers.get(key)); previewStates.set(key, state); indicators.get(key)?.replaceChildren(photoIndicator(state, reason ? `Falhou: ${reason}` : "")); },
     get busy() { return pending > 0; },
     /** Fotos válidas na ordem da seleção, com URL local (para a prévia; nada é enviado). */
     previewImages: () => queue.items.filter((it) => it.check.ok && urls.has(it.key)).map((it) => ({ url: urls.get(it.key), alt: it.alt })),
     el: h("div", { class: "photo-picker" }, input, pick, status, info, list),
-    reset() { generation++; for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
+    reset() { generation++; preparing = []; for (const timer of previewTimers.values()) clearTimeout(timer); previewTimers.clear(); previewStates.clear(); for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
   };
 }
+
 

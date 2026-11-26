@@ -53,20 +53,24 @@ export function createPhotoQueue() {
  * interrompe as demais (exceto sessão expirada). Revalida cada arquivo antes de enviar.
  * Retorna { uploaded, failed:[{name,error}], skipped:[{name,error}], sessionExpired }.
  */
-export async function uploadPhotos(api, productId, items, startOrder = 0, { onProgress } = {}) {
+export async function uploadPhotos(api, productId, items, startOrder = 0, { onProgress, onState } = {}) {
   const uploaded = [], failed = [], skipped = [];
   let sessionExpired = false;
   let order = startOrder;
   let done = 0;
   for (const it of items) {
     onProgress?.({ done, total: items.length, name: it.file.name });
+    const notify = (state, reason = "") => onState?.({ productId, key: it.key, name: it.file.name, state, reason });
     const check = validateImageFile(it.file);
-    if (!check.ok) { skipped.push({ name: it.file.name, error: check.error }); continue; }
-    if (sessionExpired) { failed.push({ name: it.file.name, error: "session_expired", reason: describeUploadError({ code: "session_expired" }) }); continue; }
+    if (!check.ok) { skipped.push({ name: it.file.name, error: check.error }); notify("error", check.error); continue; }
+    if (sessionExpired) { failed.push({ name: it.file.name, error: "session_expired", reason: describeUploadError({ code: "session_expired" }) }); notify("error", describeUploadError({ code: "session_expired" })); continue; }
+    notify("sending");
     try {
       uploaded.push(await api.uploadImage(productId, it.file, { altText: (it.alt ?? "").trim(), sortOrder: order }));
+      notify("success");
     } catch (e) {
       failed.push({ name: it.file.name, error: e?.message ?? "upload_failed", reason: describeUploadError(e) });
+      notify("error", describeUploadError(e));
       if (e?.code === "session_expired") sessionExpired = true;
     }
     order++; // mantém a posição relativa mesmo quando uma foto falha
@@ -93,3 +97,4 @@ export function summarizeUpload({ uploaded, failed, skipped }) {
   if (skipped.length) parts.push(`Ignorada(s) por formato/tamanho: ${skipped.map((f) => f.name).join(", ")}.`);
   return { text: parts.join(" "), hasProblem: failed.length > 0 || skipped.length > 0 };
 }
+
