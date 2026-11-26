@@ -83,7 +83,7 @@ do $$
 declare
   adm uuid := '00000000-0000-0000-0000-0000000000c3';
   c text := '{"name":"Aud Ita","phone":"%s","postal_code":"38000000","address_line":"Rua X","address_number":"1","neighborhood":"B","city":"C","state":"MG"}';
-  r jsonb; o1 uuid; o2 uuid; o3 uuid; e text; d text;
+  r jsonb; o1 uuid; o2 uuid; o3 uuid; e text; d text; fk_name text;
   va uuid := '60000000-0000-0000-0000-000000000001'; vb uuid := '60000000-0000-0000-0000-000000000002';
 begin
   perform set_config('request.jwt.claims', json_build_object('sub', adm)::text, true);
@@ -135,16 +135,18 @@ begin
   perform pg_temp.ok('concluído não aceita frete nem cancelamento', pg_temp.try_as('authenticated', adm, format($q$select public.admin_set_order_shipping('%s', 1)$q$, o2)) like 'order_not_open%'
     and pg_temp.try_as('authenticated', adm, format($q$select public.admin_cancel_order('%s')$q$, o2)) like 'invalid_transition%');
   perform pg_temp.ok('estoque nunca fica negativo (CHECK)', pg_temp.try_as('postgres', null, format($q$update public.product_variants set quantity = -1 where id = '%s'$q$, va)) like '%product_variants_quantity_check%');
-  -- SQLSTATE é estável entre idiomas/versões do PostgreSQL; o texto de sqlerrm não é.
+  -- PostgreSQL 18 distingue RESTRICT (23001) de outras violações de FK (23503).
+  -- Confere a constraint exata e a linha preservada, sem depender do texto do erro.
   e := null;
   begin
     delete from public.product_variants where id = va;
   exception when others then
-    get stacked diagnostics e = returned_sqlstate, d = message_text;
+    get stacked diagnostics e = returned_sqlstate, d = message_text, fk_name = constraint_name;
   end;
   raise notice 'Diagnóstico da exclusão de variante: SQLSTATE=%, mensagem=%', e, d;
   perform pg_temp.ok('variante usada em pedido não pode ser apagada (FK)',
-    e = '23503' and exists(select 1 from public.product_variants where id = va));
+    e in ('23503', '23001') and fk_name = 'order_items_variant_id_fkey'
+    and exists(select 1 from public.product_variants where id = va));
   perform pg_temp.ok('admin não apaga pedidos', pg_temp.try_as('authenticated', adm, format($q$delete from public.orders where id = '%s'$q$, o2)) like 'permission denied%');
   perform pg_temp.ok('admin lê pedidos e histórico', pg_temp.try_as('authenticated', adm, 'select 1 / (select count(*) from public.orders)') is null);
 end $$;
