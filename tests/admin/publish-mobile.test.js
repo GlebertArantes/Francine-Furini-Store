@@ -81,12 +81,12 @@ test("criar produto com foto encaminha o progresso e mantém criar-antes-de-envi
   assert.deepEqual(seen, [0, 1]);
 });
 
-test("foto grande de celular: só arquivos > 8 MB (JPEG/PNG/WebP) são reduzidos; proporção mantida e nunca amplia", () => {
+test("foto grande de celular: só arquivos > 8 MB (JPEG/PNG/WebP/AVIF) são reduzidos; proporção mantida e nunca amplia", () => {
   assert.equal(shouldShrink(file("a.jpg", "image/jpeg", MAX_IMAGE_BYTES + 1)), true);
   assert.equal(shouldShrink(file("a.png", "image/png", 20 * 1024 * 1024)), true);
   assert.equal(shouldShrink(file("a.jpg", "image/jpeg", MAX_IMAGE_BYTES)), false); // no limite: intacto
   assert.equal(shouldShrink(file("a.jpg", "image/jpeg", 3_000_000)), false);
-  assert.equal(shouldShrink(file("a.avif", "image/avif", 20_000_000)), false);      // AVIF não é recodificado
+  assert.equal(shouldShrink(file("a.avif", "image/avif", 20_000_000)), true);       // AVIF aceito também pode ser reduzido
   assert.equal(shouldShrink(file("a.gif", "image/gif", 20_000_000)), false);
   assert.deepEqual(targetSize(8000, 6000), { width: MAX_SIDE, height: 1800 });
   assert.deepEqual(targetSize(6000, 8000), { width: 1800, height: MAX_SIDE });
