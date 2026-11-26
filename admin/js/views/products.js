@@ -347,16 +347,25 @@ export function photoPicker({ onChange } = {}) {
     const current = generation;
     pending++; input.disabled = true; onChange?.(false);
     const files = [...input.files]; input.value = "";
-    const prepared = []; let shrunk = 0;
-    for (const f of files) {
-      if (shouldShrink(f)) {
-        status.textContent = `Reduzindo a foto grande “${f.name}”…`;
-        try { prepared.push(await shrinkImage(f)); shrunk++; continue; } catch { /* mantém o original: será sinalizado como grande demais */ }
+    const prepared = []; let shrunk = 0, failed = 0;
+    try {
+      for (const f of files) {
+        if (current !== generation) break;
+        if (shouldShrink(f)) {
+          status.textContent = `Reduzindo a foto grande “${f.name}”…`;
+          try { prepared.push(await shrinkImage(f)); shrunk++; continue; }
+          catch { failed++; /* mantém o original para exibir a validação na fila */ }
+        }
+        prepared.push(f);
       }
-      prepared.push(f);
+    } finally {
+      pending--; input.disabled = pending > 0;
+      if (current === generation) {
+        note = [shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : "",
+          failed ? `Não foi possível processar ${failed} foto(s). Tente novamente ou selecione uma versão JPG menor.` : ""].filter(Boolean).join(" ");
+        queue.add(prepared); draw();
+      }
     }
-    pending--; input.disabled = pending > 0;
-    if (current === generation) { note = shrunk ? `${shrunk} foto(s) grande(s) reduzida(s) automaticamente.` : ""; queue.add(prepared); draw(); }
   });
   draw();
 
@@ -369,3 +378,4 @@ export function photoPicker({ onChange } = {}) {
     reset() { generation++; for (const u of urls.values()) URL.revokeObjectURL(u); urls.clear(); queue.clear(); note = ""; draw(); },
   };
 }
+
