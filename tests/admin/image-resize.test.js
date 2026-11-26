@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { shouldShrink, shrinkImage, targetSize } from '../../admin/js/lib/image-resize.js';
 import { MAX_IMAGE_BYTES } from '../../admin/js/lib/rules.js';
+import { loadPhoto } from '../../admin/js/lib/photo-transform.js';
 const source = { name:'frente.png', type:'image/png', size:MAX_IMAGE_BYTES+1000 };
 function environment({ bitmap='ok', sizes=[200000], context=true }={}) {
   const calls=[], revoked=[];let closed=0;
@@ -38,4 +39,21 @@ test('nunca retorna arquivo vazio ou acima de 8 MB e libera o bitmap mesmo na fa
   for(const size of [0,MAX_IMAGE_BYTES+1]){
     const e=environment({sizes:[size]});await assert.rejects(shrinkImage(source,e.env));assert.equal(e.closed(),1);
   }
+});
+test('bitmap sem resposta usa alternativa e libera o bitmap que chegar atrasado',async()=>{
+  const e=environment({bitmap:'absent'});let finish,closed=0;
+  e.env.createImageBitmap=()=>new Promise(resolve=>{finish=resolve;});
+  const image=await loadPhoto(source,e.env,5);
+  assert.equal(image.width,6000);assert.deepEqual(e.revoked,['blob:test']);
+  finish({close(){closed++;}});await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(closed,1);
+});
+test('decodificador e canvas sem resposta terminam com erro e liberam recursos',async()=>{
+  const e=environment({bitmap:'absent'});
+  e.env.Image=class {set src(_value){}};
+  await assert.rejects(shrinkImage(source,e.env,5),/image_decode_timeout/);
+  assert.deepEqual(e.revoked,['blob:test']);
+  const encoding=environment();encoding.canvas.toBlob=()=>{};
+  await assert.rejects(shrinkImage(source,encoding.env,5),/image_encode_timeout/);
+  assert.equal(encoding.closed(),1);assert.equal(encoding.canvas.width,0);
 });

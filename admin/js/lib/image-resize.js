@@ -1,10 +1,10 @@
 // Redução automática de fotos grandes (celulares modernos geram JPEG/PNG acima de 8 MB).
 // Só atua em arquivos ACIMA do limite do bucket; arquivos normais seguem intactos.
 import { MAX_IMAGE_BYTES, IMAGE_TYPES } from "./rules.js";
+import { loadPhoto } from "./photo-transform.js";
 
 export const MAX_SIDE = 2400;       // lado maior após reduzir (boa qualidade para a vitrine)
 export const SHRINK_QUALITY = 0.86;
-import { loadPhoto } from "./photo-transform.js";
 const SHRINKABLE = new Set(Object.keys(IMAGE_TYPES));
 
 export const shouldShrink = (file) => !!file && file.size > MAX_IMAGE_BYTES && SHRINKABLE.has(file.type);
@@ -21,8 +21,8 @@ export const shrunkName = (name) => `${String(name).replace(/\.[^.]+$/, "") || "
  * Reduz via canvas (respeita a orientação EXIF). Devolve um File JPEG ou lança se não for possível
  * (nesse caso o arquivo original segue sinalizado como grande demais).
  */
-export async function shrinkImage(file, env = globalThis) {
-  const image = await loadPhoto(file, env);
+export async function shrinkImage(file, env = globalThis, timeoutMs = 20000) {
+  const image = await loadPhoto(file, env, timeoutMs);
   let canvas;
   try {
     if (!(image.width > 0 && image.height > 0)) throw new Error("invalid_image_size");
@@ -36,7 +36,11 @@ export async function shrinkImage(file, env = globalThis) {
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width, height);
       ctx.drawImage(image, 0, 0, width, height);
       for (const quality of [SHRINK_QUALITY, .78, .68]) {
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+        const blob = await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("image_encode_timeout")), timeoutMs);
+          try { canvas.toBlob((result) => { clearTimeout(timer); resolve(result); }, "image/jpeg", quality); }
+          catch (error) { clearTimeout(timer); reject(error); }
+        });
         if (blob?.size > 0 && blob.size <= MAX_IMAGE_BYTES) {
           return new env.File([blob], shrunkName(file.name), { type: "image/jpeg", lastModified: Date.now() });
         }

@@ -59,16 +59,29 @@ export function drawPhoto(ctx, image, value, width, height) {
   ctx.restore();
 }
 
-export async function loadPhoto(file, env = globalThis) {
+export async function loadPhoto(file, env = globalThis, timeoutMs = 20000) {
   if (typeof env.createImageBitmap === "function") {
-    try { return await env.createImageBitmap(file, { imageOrientation: "from-image" }); } catch { /* fallback para decodificadores do navegador */ }
+    try {
+      return await new Promise((resolve, reject) => {
+        let expired = false;
+        const timer = setTimeout(() => { expired = true; reject(new Error("image_decode_timeout")); }, timeoutMs);
+        Promise.resolve().then(() => env.createImageBitmap(file, { imageOrientation: "from-image" })).then(
+          (image) => { clearTimeout(timer); if (expired) image.close?.(); else resolve(image); },
+          (error) => { clearTimeout(timer); reject(error); });
+      });
+    } catch { /* fallback para decodificadores do navegador */ }
   }
   const url = env.URL.createObjectURL(file);
+  const image = new env.Image();
   try {
-    const image = new env.Image();
-    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error("image_decode_failed")); image.src = url; });
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { image.src = ""; reject(new Error("image_decode_timeout")); }, timeoutMs);
+      image.onload = () => { clearTimeout(timer); resolve(); };
+      image.onerror = () => { clearTimeout(timer); reject(new Error("image_decode_failed")); };
+      image.src = url;
+    });
     return image;
-  } finally { env.URL.revokeObjectURL(url); }
+  } finally { image.onload = image.onerror = null; env.URL.revokeObjectURL(url); }
 }
 
 export async function exportPhoto(image, value, name, env = globalThis) {
