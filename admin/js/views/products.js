@@ -378,7 +378,7 @@ export function photoPicker({ onChange } = {}) {
         it.check.ok ? alt : h("p", { class: "err" }, it.check.error), it.check.ok ? adjust : null, restore, rm);
     }));
     const n = queue.valid().length;
-    status.textContent = `${n ? `${n} foto(s) pronta(s) para enviar.` : "Nenhuma foto selecionada."}${note ? ` ${note}` : ""}`;
+    status.textContent = `${n ? `${n} foto(s) selecionada(s). Confira o indicador de cada foto.` : "Nenhuma foto selecionada."}${note ? ` ${note}` : ""}`;
     onChange?.(n > 0 && pending === 0);
   };
   input.addEventListener("change", async () => {
