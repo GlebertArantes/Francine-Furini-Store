@@ -1,10 +1,11 @@
 // Redução automática de fotos grandes (celulares modernos geram JPEG/PNG acima de 8 MB).
 // Só atua em arquivos ACIMA do limite do bucket; arquivos normais seguem intactos.
-import { MAX_IMAGE_BYTES } from "./rules.js";
+import { MAX_IMAGE_BYTES, IMAGE_TYPES } from "./rules.js";
 
 export const MAX_SIDE = 2400;       // lado maior após reduzir (boa qualidade para a vitrine)
 export const SHRINK_QUALITY = 0.86;
-const SHRINKABLE = new Set(["image/jpeg", "image/png", "image/webp"]);
+import { loadPhoto } from "./photo-transform.js";
+const SHRINKABLE = new Set(Object.keys(IMAGE_TYPES));
 
 export const shouldShrink = (file) => !!file && file.size > MAX_IMAGE_BYTES && SHRINKABLE.has(file.type);
 
@@ -21,16 +22,29 @@ export const shrunkName = (name) => `${String(name).replace(/\.[^.]+$/, "") || "
  * (nesse caso o arquivo original segue sinalizado como grande demais).
  */
 export async function shrinkImage(file, env = globalThis) {
-  const bmp = await env.createImageBitmap(file, { imageOrientation: "from-image" });
+  const image = await loadPhoto(file, env);
+  let canvas;
   try {
-    const { width, height } = targetSize(bmp.width, bmp.height);
-    const canvas = env.document.createElement("canvas");
-    canvas.width = width; canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width, height); // PNG com transparência -> fundo branco no JPEG
-    ctx.drawImage(bmp, 0, 0, width, height);
-    const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", SHRINK_QUALITY));
-    if (!blob || blob.size === 0 || blob.size > MAX_IMAGE_BYTES) throw new Error("shrink_failed");
-    return new env.File([blob], shrunkName(file.name), { type: "image/jpeg", lastModified: Date.now() });
-  } finally { bmp.close?.(); }
+    if (!(image.width > 0 && image.height > 0)) throw new Error("invalid_image_size");
+    canvas = env.document.createElement("canvas");
+    // A primeira tentativa preserva a qualidade anterior. Só reduz mais se necessário.
+    for (const maxSide of [MAX_SIDE, 1920, 1600]) {
+      const { width, height } = targetSize(image.width, image.height, maxSide);
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("canvas_unavailable");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(image, 0, 0, width, height);
+      for (const quality of [SHRINK_QUALITY, .78, .68]) {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+        if (blob?.size > 0 && blob.size <= MAX_IMAGE_BYTES) {
+          return new env.File([blob], shrunkName(file.name), { type: "image/jpeg", lastModified: Date.now() });
+        }
+      }
+    }
+    throw new Error("shrink_failed");
+  } finally {
+    image.close?.();
+    if (canvas) { canvas.width = 0; canvas.height = 0; }
+  }
 }
